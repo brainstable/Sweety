@@ -325,7 +325,8 @@ npm run release
 25. `docs(demo): добавить examples/index.html с OSM, маркерами и полигоном`
 26. `chore(build): настроить ESM/UMD, минификацию и копию UMD`
 27. `ci: добавить GitHub Actions для lint, test и build`
-28. `chore(release): v0.1.0 — changelog и тег`
+28. `fix(core): гарантировать уникальные идентификаторы слоёв и событий`
+29. `chore(release): v0.1.0 — changelog и тег`
 
 ## 11. Проверка перед релизом
 

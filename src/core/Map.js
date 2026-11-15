@@ -30,6 +30,7 @@ import {
   isObject,
   rafThrottle,
   requestAnimFrame,
+  stamp,
 } from '../util/index.js';
 
 /** @type {Function[]} */
@@ -1108,7 +1109,7 @@ export class Map extends Evented {
     if (!layer) throw new TypeError('addLayer expects a layer');
     if (layer._map === this) return this;
 
-    const id = layer._sweetyId || (layer._sweetyId = ++Map._layerId);
+    const id = stamp(layer);
     this._layers[id] = layer;
     layer._map = this;
     layer.addEventParent(this);
@@ -1139,14 +1140,14 @@ export class Map extends Evented {
     layer.fire('remove', { layer }, false);
     layer.removeEventParent(this);
     layer._map = null;
-    delete this._layers[layer._sweetyId];
+    delete this._layers[stamp(layer)];
     this.fire('layerremove', { layer });
     return this;
   }
 
   /** @returns {boolean} */
   hasLayer(layer) {
-    return Boolean(layer && layer._map === this && this._layers[layer._sweetyId]);
+    return Boolean(layer && layer._map === this && this._layers[stamp(layer)]);
   }
 
   /**
@@ -1429,7 +1430,5 @@ export class Map extends Evented {
     return getMousePosition(event, this._container);
   }
 }
-
-Map._layerId = 0;
 
 export { DEFAULT_OPTIONS };
