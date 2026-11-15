@@ -85,6 +85,8 @@ const marker = new Marker([55.7522, 37.6156], {
   )
   .bindTooltip('Перетащите меня', { permanent: true, direction: 'top' });
 
+marker.on('dragend', updateStats);
+
 objects.addLayer(kremlin).addLayer(gardenRing).addLayer(embankment);
 objects.addTo(map);
 
@@ -145,7 +147,10 @@ const centerOutput = document.getElementById('stat-center');
 const zoomOutput = document.getElementById('stat-zoom');
 const cursorOutput = document.getElementById('stat-cursor');
 const layersOutput = document.getElementById('stat-layers');
-const canvasButtons = [document.getElementById('add-canvas'), document.getElementById('clear-canvas')];
+const canvasButtons = [
+  document.getElementById('add-canvas'),
+  document.getElementById('clear-canvas'),
+];
 let canvasLayers = [];
 
 function formatLatLng(latlng) {
