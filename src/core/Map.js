@@ -7,6 +7,7 @@ import { DragHandler } from '../handlers/DragHandler.js';
 import { ScrollWheelZoom } from '../handlers/ScrollWheelZoom.js';
 import { DoubleClickZoom } from '../handlers/DoubleClickZoom.js';
 import { TouchZoom } from '../handlers/TouchZoom.js';
+import { SVG } from '../layers/vector/SVG.js';
 import {
   addClass,
   create,
@@ -141,6 +142,8 @@ export class Map extends Evented {
     this._panes = Object.create(null);
     /** @type {import('../controls/Control.js').Control[]} */
     this._controls = [];
+    /** @type {SVG|null} */
+    this._svgRenderer = null;
 
     this._loaded = false;
     this._size = new Point(0, 0);
@@ -297,7 +300,9 @@ export class Map extends Evented {
     if (
       target &&
       target.closest &&
-      target.closest('.sweety-control, .sweety-popup, .sweety-tooltip, .sweety-marker')
+      target.closest(
+        '.sweety-control, .sweety-popup, .sweety-tooltip, .sweety-marker, .sweety-svg-layer, .sweety-canvas-layer',
+      )
     ) {
       return;
     }
@@ -423,6 +428,7 @@ export class Map extends Evented {
     remove(this._mapPane);
     this._container._sweetyMap = null;
     this._loaded = false;
+    this._svgRenderer = null;
     return this;
   }
 
@@ -1014,6 +1020,28 @@ export class Map extends Evented {
   /** @returns {import('../layers/Layer.js').Layer[]} */
   getLayers() {
     return Object.values(this._layers);
+  }
+
+  /**
+   * Resolve a shared renderer for a vector path.
+   * @param {import('../layers/vector/Path.js').Path} layer
+   * @returns {import('../layers/vector/Renderer.js').Renderer}
+   * @private
+   */
+  _getRenderer(layer) {
+    if (layer.options.renderer) {
+      const renderer = layer.options.renderer;
+      if (!renderer._map) this.addLayer(renderer);
+      return renderer;
+    }
+    if (this.options.preferCanvas && this._canvasRenderer) {
+      return this._canvasRenderer;
+    }
+    if (!this._svgRenderer) {
+      this._svgRenderer = new SVG();
+      this.addLayer(this._svgRenderer);
+    }
+    return this._svgRenderer;
   }
 
   /**
