@@ -964,6 +964,7 @@ export class Map extends Evented {
 
     try {
       if (typeof layer.onAdd === 'function') layer.onAdd(this);
+      layer.fire('add', { layer }, false);
       if (typeof layer._update === 'function') layer._update();
     } catch (error) {
       delete this._layers[id];
@@ -984,6 +985,7 @@ export class Map extends Evented {
   removeLayer(layer) {
     if (!layer || layer._map !== this) return this;
     if (typeof layer.onRemove === 'function') layer.onRemove(this);
+    layer.fire('remove', { layer }, false);
     layer.removeEventParent(this);
     layer._map = null;
     delete this._layers[layer._sweetyId];
