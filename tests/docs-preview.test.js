@@ -108,4 +108,25 @@ describe('docs preview', () => {
     const result = await runMiddleware('/packages/map-edit-plugin/missing.md');
     expect(result.next).toBe(true);
   });
+
+  it('пропускает HTML-блоки README и чистит опасные теги', () => {
+    const html = renderMarkdown(
+      [
+        '<p align="center">',
+        '  <img src="assets/brand/sweety-logo.svg" alt="Sweety" width="300">',
+        '</p>',
+        '',
+        '<p align="center" onclick="alert(1)"><a href="javascript:alert(2)">x</a></p>',
+        '',
+        '<p align="center"><script>alert(3)</script>ok</p>',
+      ].join('\n'),
+      { basePath: '/README.md' },
+    );
+
+    expect(html).toContain('<p align="center">');
+    expect(html).toContain('src="/assets/brand/sweety-logo.svg"');
+    expect(html).not.toContain('onclick=');
+    expect(html).not.toContain('javascript:');
+    expect(html).not.toContain('<script>');
+  });
 });

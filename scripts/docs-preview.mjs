@@ -20,6 +20,7 @@ const DOC_NAV = [
   { id: 'api', title: 'API Reference', href: '/docs/API.md' },
   { id: 'architecture', title: 'Архитектура', href: '/docs/ARCHITECTURE.md' },
   { id: 'git', title: 'Git-процесс', href: '/docs/GIT-WORKFLOW.md' },
+  { id: 'brand', title: 'Бренд', href: '/docs/BRAND.md' },
   { id: 'changelog', title: 'CHANGELOG', href: '/CHANGELOG.md' },
 ];
 
@@ -72,6 +73,15 @@ const DOC_PAGES = new Map([
       basePath: '/docs/GIT-WORKFLOW.md',
     },
   ],
+  [
+    '/docs/brand.md',
+    {
+      id: 'brand',
+      title: 'Бренд',
+      file: 'docs/BRAND.md',
+      basePath: '/docs/BRAND.md',
+    },
+  ],
 ]);
 
 function escapeHtml(value) {
@@ -80,6 +90,29 @@ function escapeHtml(value) {
 
 function escapeAttribute(value) {
   return escapeHtml(value);
+}
+
+// README-блоки вроде <p align="center"><img …></p> приходят из GitHub-разметки.
+// Пропускаем только безопасный набор тегов, вычищая скрипты и обработчики.
+const HTML_BLOCK_RE = /^<(?:p|div|center|h[1-6]|figure|picture)\b[^>]*>/i;
+const HTML_UNSAFE_TAGS_RE =
+  /<(script|style|iframe|object|embed|form|link|meta)\b[\s\S]*?<\/\1\s*>/gi;
+const HTML_EVENT_ATTRIBUTE_RE = /\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
+const HTML_JS_URL_RE = /\s(href|src)\s*=\s*(?:"|')?\s*javascript:[^"'>\s]*/gi;
+const HTML_URL_RE = /\s(src|href)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+
+function renderHtmlBlock(block, basePath) {
+  const cleaned = block
+    .replace(HTML_UNSAFE_TAGS_RE, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(HTML_EVENT_ATTRIBUTE_RE, '')
+    .replace(HTML_JS_URL_RE, '');
+
+  return cleaned.replace(HTML_URL_RE, (match, attribute, doubleQuoted, singleQuoted) => {
+    const value = doubleQuoted ?? singleQuoted ?? '';
+    const quote = doubleQuoted === undefined ? "'" : '"';
+    return ` ${attribute}=${quote}${resolveHref(value, basePath)}${quote}`;
+  });
 }
 
 function slugify(value) {
@@ -310,6 +343,18 @@ function renderBlocks(lines, basePath, state) {
       continue;
     }
 
+    if (HTML_BLOCK_RE.test(line)) {
+      const block = [];
+
+      while (index < lines.length && !/^\s*$/.test(lines[index])) {
+        block.push(lines[index]);
+        index += 1;
+      }
+
+      html += renderHtmlBlock(block.join('\n'), basePath);
+      continue;
+    }
+
     const heading = line.match(HEADING_RE);
     if (heading) {
       const level = heading[1].length;
@@ -432,6 +477,8 @@ function renderPage(doc, body, version) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
+    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/assets/brand/favicon.ico" sizes="16x16 32x32">
     <title>${escapeHtml(pageTitle)}</title>
     <style>${PAGE_STYLES}</style>
   </head>
@@ -439,7 +486,7 @@ function renderPage(doc, body, version) {
     <div class="layout">
       <aside class="sidebar">
         <a class="brand" href="/docs/">
-          <span class="brand-mark" aria-hidden="true">S</span>
+          <img class="brand-mark" src="/assets/brand/sweety-mark.svg" alt="" width="44" height="44" aria-hidden="true">
           <span class="brand-text"><strong>Sweety</strong><small>интерактивные карты</small></span>
         </a>
         <nav class="nav" aria-label="Документация">${navigation}</nav>
@@ -535,17 +582,12 @@ a {
 }
 
 .brand-mark {
-  display: grid;
+  display: block;
   width: 44px;
   height: 44px;
   flex: none;
-  place-items: center;
-  border-radius: 13px;
-  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  border-radius: 12px;
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
-  color: #fff;
-  font-size: 21px;
-  font-weight: 800;
 }
 
 .brand-text {
@@ -876,6 +918,20 @@ a {
 .markdown p > a > img {
   border: 0;
   border-radius: 4px;
+  box-shadow: none;
+}
+
+.markdown p[align='center'] {
+  text-align: center;
+}
+
+.markdown p[align='center'] > img {
+  display: inline-block;
+  width: auto;
+  max-height: 120px;
+  margin: 0.4em 0 0.6em;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
 }
 
