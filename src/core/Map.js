@@ -1331,6 +1331,7 @@ export class Map extends Evented {
     void pane.offsetWidth;
     addClass(this._container, 'sweety-zoom-anim');
     this._zoomAnimFrame = requestAnimFrame(() => {
+      pane.style.transition = '';
       pane.style.transform = 'scale(1)';
     });
 
