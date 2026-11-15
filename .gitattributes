@@ -1,0 +1,21 @@
+* text=auto eol=lf
+
+# Shell entrypoints must stay LF so Git hooks work on every platform.
+*.sh text eol=lf
+.husky/* text eol=lf
+.github/**/*.yml text eol=lf
+.github/**/*.yaml text eol=lf
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
