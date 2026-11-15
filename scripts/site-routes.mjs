@@ -57,7 +57,7 @@ export const SITE_PAGES = [
 ];
 
 // Файлы сайта, которые отдаются как есть: картинки документации и иконки.
-// Список явный, чтобы в артефакт не попадал генератор assets/logo/build.py.
+// Список явный, чтобы в артефакт попадали только нужные ассеты.
 export const SITE_FILES = [
   'docs/demo.webp',
   'assets/logo/favicon.svg',
