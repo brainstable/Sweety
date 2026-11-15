@@ -61,6 +61,7 @@
   "scripts": {
     "dev": "vite --open /demo/",
     "build": "vite build && node scripts/copy-umd.mjs",
+    "size": "node scripts/check-size.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

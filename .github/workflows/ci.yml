@@ -58,3 +58,36 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+  edit-plugin:
+    name: Edit plugin lint, test, size
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint plugin
+        run: npx eslint packages/map-edit-plugin/src packages/map-edit-plugin/test packages/map-edit-plugin/scripts
+
+      - name: Test plugin
+        run: npm --prefix packages/map-edit-plugin run test
+
+      - name: Build plugin (ESM, UMD, CSS)
+        run: npm --prefix packages/map-edit-plugin run build
+
+      - name: Check plugin bundle size
+        run: npm --prefix packages/map-edit-plugin run size
+
+      - name: Check plugin package contents
+        run: npm --prefix packages/map-edit-plugin pack --dry-run
