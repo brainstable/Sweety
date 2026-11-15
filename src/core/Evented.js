@@ -200,6 +200,9 @@ export class Evented {
       event.propagatedFrom = this;
       event.layer = this;
       parent.fire(event.type, event, true);
+      // Parents without their own event parents do not mark themselves, so the
+      // caller marks them after dispatch to keep diamond graphs duplicate-free.
+      visited.add(parent);
     }
   }
 }
