@@ -60,6 +60,8 @@ export {
   cartoVoyager,
   esriWorldImagery,
   esriWorldTopo,
+  esriLightGray,
+  esriDarkGray,
   stamenToner,
   mapbox,
   maptiler,

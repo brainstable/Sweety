@@ -127,6 +127,8 @@ export interface BasemapControlOptions {
   showCategories?: boolean;
   theme?: 'light' | 'dark' | null;
   manager?: BasemapsManager | null;
+  labels?: Record<string, string>;
+  previewCoords?: { x: number; y: number; z: number };
   i18n?: Record<string, string>;
   className?: string;
 }
@@ -383,6 +385,8 @@ export declare const cartoDark: ProviderDef;
 export declare const cartoVoyager: ProviderDef;
 export declare const esriWorldImagery: ProviderDef;
 export declare const esriWorldTopo: ProviderDef;
+export declare const esriLightGray: ProviderDef;
+export declare const esriDarkGray: ProviderDef;
 export declare const stamenToner: ProviderDef;
 export declare const mapbox: ProviderDef;
 export declare const maptiler: ProviderDef;
