@@ -101,6 +101,30 @@
     </style>
   </head>
   <body>
+    <script data-demo-guard data-demo-url="http://localhost:5173/packages/map-edit-plugin/demo/">
+      (function () {
+        if (location.protocol !== 'file:') return;
+        var url = document.currentScript.getAttribute('data-demo-url');
+        var overlay = document.createElement('div');
+        overlay.setAttribute('role', 'alert');
+        overlay.style.cssText =
+          'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;background:#0f172a;color:#e2e8f0;font:15px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;';
+        overlay.innerHTML =
+          '<div style="max-width:580px">' +
+          '<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25">Демо запускается через Vite</h1>' +
+          '<p style="margin:0 0 14px;color:#94a3b8">Файл открыт напрямую с диска. ES-модули в этом режиме блокируются браузером, поэтому карта остаётся пустой.</p>' +
+          '<p style="margin:0 0 10px">Запустите dev-сервер:</p>' +
+          '<pre style="margin:0 0 16px;padding:12px 14px;border-radius:8px;background:#1e293b;color:#e2e8f0;overflow:auto">npm --prefix packages/map-edit-plugin run dev</pre>' +
+          '<p style="margin:0 0 16px">или откройте уже запущенный сервер:<br><a style="color:#38bdf8" href="' +
+          url +
+          '">' +
+          url +
+          '</a></p>' +
+          '<p style="margin:0;color:#64748b;font-size:13px">Подсказка: в Vite-сервере этот файл открывается по тому же адресу, но через http://, а не file://.</p>' +
+          '</div>';
+        document.documentElement.appendChild(overlay);
+      })();
+    </script>
     <div id="map"></div>
     <aside>
       <div class="panel-head">
