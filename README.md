@@ -1,9 +1,9 @@
 # Sweety
 
 **Sweety** — модульная JavaScript-библиотека интерактивных карт без runtime-зависимостей.
-API вдохновлён Leaflet: центральный класс `Map`, слои, контролы, события и плагины.
-Библиотека поставляется в виде ES-модулей и UMD-сборки, а для стилей используется
-отдельный CSS-файл.
+Ядро API — центральный класс `Map`, слои, контролы, события и плагины. Библиотека
+поставляется в виде ES-модулей и UMD-сборки, а для стилей используется отдельный
+CSS-файл.
 
 [![CI](https://github.com/brainstable/sweety/actions/workflows/ci.yml/badge.svg)](https://github.com/brainstable/sweety/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
