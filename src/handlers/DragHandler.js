@@ -205,6 +205,7 @@ export class DragHandler extends Handler {
   /** @private */
   _startInertia(velocity) {
     this._inertiaVelocity = velocity;
+    this._map._inertiaActive = true;
     this._inertiaLastTime = performance.now();
     this._inertiaStillFrames = 0;
     this._inertiaFrame = requestAnimFrame((time) => this._stepInertia(time));
@@ -257,6 +258,7 @@ export class DragHandler extends Handler {
       this._inertiaFrame = null;
     }
     this._inertiaVelocity = null;
+    this._map._inertiaActive = false;
   }
 
   /** @private */

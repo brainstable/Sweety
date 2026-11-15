@@ -126,6 +126,19 @@ describe('TileLayer', () => {
     map.remove();
   });
 
+  it('defers tile updates until idle when requested', () => {
+    const { map, layer } = setup({ updateWhenIdle: true });
+    const before = Object.keys(layer._tiles);
+    map._dragging = true;
+    map.setView([20, 20], 4, { animate: false });
+    expect(Object.keys(layer._tiles)).toEqual(before);
+
+    map._dragging = false;
+    map.fire('moveend');
+    expect(Object.keys(layer._tiles)).not.toEqual(before);
+    map.remove();
+  });
+
   it('cleans up its DOM and timers on removal', () => {
     const { map, layer } = setup();
     const root = layer._container;

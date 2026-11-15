@@ -28,6 +28,7 @@ import {
   easeOutCubic,
   extend,
   isObject,
+  rafThrottle,
   requestAnimFrame,
 } from '../util/index.js';
 
@@ -164,6 +165,7 @@ export class Map extends Evented {
     this._frame = null;
     this._dragging = false;
     this._pinching = false;
+    this._inertiaActive = false;
     this._animatingZoom = false;
     this._zoomAnimated = false;
     this._zoomAnimTimer = null;
@@ -237,6 +239,7 @@ export class Map extends Evented {
   /** @private */
   _initEvents() {
     this._handleDOMEvent = (event) => this._handleDOMEventInternal(event);
+    this._handleMouseMove = rafThrottle((event) => this._handleDOMEventInternal(event));
     this._onResize = () => this.invalidateSize();
     this._onWindowResize = () => this.invalidateSize({ debounce: true });
 
@@ -245,7 +248,7 @@ export class Map extends Evented {
       'click dblclick contextmenu mousedown mouseup mouseover mouseout',
       this._handleDOMEvent,
     );
-    on(this._container, 'mousemove', this._handleDOMEvent);
+    on(this._container, 'mousemove', this._handleMouseMove);
 
     if (this.options.trackResize) {
       if (typeof ResizeObserver !== 'undefined') {
@@ -458,7 +461,8 @@ export class Map extends Evented {
       'click dblclick contextmenu mousedown mouseup mouseover mouseout',
       this._handleDOMEvent,
     );
-    off(this._container, 'mousemove', this._handleDOMEvent);
+    off(this._container, 'mousemove', this._handleMouseMove);
+    this._handleMouseMove.cancel();
     removeClass(this._container, 'sweety-container');
     remove(this._mapPane);
     this._container._sweetyMap = null;

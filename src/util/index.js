@@ -186,6 +186,35 @@ export const requestAnimFrame = (callback) => requestFrame(callback);
 /** Cancel a callback scheduled with {@link requestAnimFrame}. */
 export const cancelAnimFrame = (callback) => cancelFrame(callback);
 
+/**
+ * Coalesce calls into one requestAnimationFrame tick. Useful for pointer and
+ * resize events that can fire faster than the display refresh rate.
+ * @param {Function} fn
+ * @param {object} [context=null]
+ * @returns {Function & {cancel: Function}}
+ */
+export function rafThrottle(fn, context = null) {
+  let frame = null;
+  let pendingArgs = null;
+  const throttled = (...args) => {
+    pendingArgs = args;
+    if (frame) return throttled;
+    frame = requestAnimFrame(() => {
+      frame = null;
+      const argsToApply = pendingArgs;
+      pendingArgs = null;
+      fn.apply(context, argsToApply || []);
+    });
+    return throttled;
+  };
+  throttled.cancel = () => {
+    if (frame) cancelAnimFrame(frame);
+    frame = null;
+    pendingArgs = null;
+  };
+  return throttled;
+}
+
 /** Cubic ease-out easing function for animated navigation. */
 export const easeOutCubic = (t) => 1 - (1 - t) ** 3;
 

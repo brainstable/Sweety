@@ -139,6 +139,22 @@ describe('Map', () => {
     map.remove();
   });
 
+  it('coalesces mousemove events into one animation frame', async () => {
+    const { map, container } = createMap({ center: [0, 0], zoom: 2 });
+    const listener = vi.fn();
+    map.on('mousemove', listener);
+    for (let x = 100; x <= 300; x += 100) {
+      container.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: 200 }),
+      );
+    }
+    expect(listener).not.toHaveBeenCalled();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(listener).toHaveBeenCalledOnce();
+    expect(listener.mock.calls[0][0].containerPoint.x).toBe(300);
+    map.remove();
+  });
+
   it('keeps a screen anchor fixed during setZoomAround', () => {
     const { map } = createMap({ center: [0, 0], zoom: 2 });
     const anchor = map.containerPointToLatLng(new Point(200, 120));

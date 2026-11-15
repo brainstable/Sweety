@@ -5,6 +5,7 @@ import {
   formatNum,
   isNumber,
   isObject,
+  rafThrottle,
   template,
   throttle,
   wrapNum,
@@ -65,6 +66,23 @@ describe('utils', () => {
     vi.advanceTimersByTime(200);
     expect(fn).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
+  });
+
+  it('coalesces calls into one animation frame', async () => {
+    const fn = vi.fn();
+    const throttled = rafThrottle(fn);
+    throttled('a');
+    throttled('b');
+    throttled('c');
+    expect(fn).not.toHaveBeenCalled();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(fn).toHaveBeenCalledOnce();
+    expect(fn).toHaveBeenCalledWith('c');
+
+    throttled('d');
+    throttled.cancel();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(fn).toHaveBeenCalledOnce();
   });
 });
 

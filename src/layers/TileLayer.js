@@ -22,6 +22,7 @@ const DEFAULT_TILE_SIZE = 256;
  * @property {string} [referrerPolicy='']
  * @property {number} [opacity=1]
  * @property {number} [keepBuffer=2]
+ * @property {boolean} [updateWhenIdle=false]
  * @property {number} [maxRetries=2]
  * @property {string} [className='']
  * @property {string} [attribution]
@@ -45,6 +46,7 @@ const DEFAULT_OPTIONS = {
   opacity: 1,
   keepBuffer: 2,
   maxRetries: 2,
+  updateWhenIdle: false,
   className: '',
   attribution: null,
   pane: 'tile',
@@ -99,10 +101,18 @@ export class TileLayer extends Layer {
     setOpacity(this._container, this.options.opacity);
     map.getPane(this.options.pane).appendChild(this._container);
     this._tileContainer = this._container;
+    if (this.options.updateWhenIdle) {
+      this._onViewEnd = () => this._update();
+      map.on('moveend zoomend resize', this._onViewEnd);
+    }
   }
 
   /** @param {import('../core/Map.js').Map} map */
   onRemove(map) {
+    if (this._onViewEnd) {
+      map.off('moveend zoomend resize', this._onViewEnd);
+      this._onViewEnd = null;
+    }
     for (const timer of this._retryTimers) clearTimeout(timer);
     this._retryTimers.clear();
     this._clearTiles();
@@ -123,8 +133,14 @@ export class TileLayer extends Layer {
    */
   _update() {
     if (!this._map || !this._tileContainer) return;
-
     const map = this._map;
+    if (
+      this.options.updateWhenIdle &&
+      (map._dragging || map._inertiaActive || map._pinching || map._animatingZoom)
+    ) {
+      return;
+    }
+
     const zoom = map.getZoom();
     if (zoom < this.options.minZoom || zoom > this.options.maxZoom) {
       this._tileContainer.style.display = 'none';
