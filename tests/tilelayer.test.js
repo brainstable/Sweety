@@ -31,6 +31,10 @@ describe('TileLayer', () => {
     expect(initial).toBeGreaterThan(10);
     expect(initial).toBeLessThan(120);
     expect(layer._container.querySelectorAll('img.sweety-tile')).toHaveLength(initial);
+    const firstTile = Object.values(layer._tiles)[0].el;
+    expect(layer._tileSize).toMatchObject({ x: 256, y: 256 });
+    expect(firstTile.height).toBe(256);
+    expect(firstTile.style.height).toBe('256px');
 
     const range = layer.getTileRange();
     expect(range).toMatchObject({ minX: expect.any(Number), maxX: expect.any(Number) });

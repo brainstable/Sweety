@@ -326,7 +326,9 @@ npm run release
 26. `chore(build): настроить ESM/UMD, минификацию и копию UMD`
 27. `ci: добавить GitHub Actions для lint, test и build`
 28. `fix(core): гарантировать уникальные идентификаторы слоёв и событий`
-29. `chore(release): v0.1.0 — changelog и тег`
+29. `fix(layers): исправить высоту тайлов`
+30. `docs(demo): добавить скриншот и приблизить начальный вид`
+31. `chore(release): v0.1.0 — changelog и тег`
 
 ## 11. Проверка перед релизом
 

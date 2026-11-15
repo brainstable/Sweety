@@ -15,7 +15,7 @@ const {
 } = Sweety;
 
 const MOSCOW = [55.7522, 37.6156];
-const INITIAL_VIEW = { center: MOSCOW, zoom: 11 };
+const INITIAL_VIEW = { center: MOSCOW, zoom: 14 };
 const KREMLIN_BOUNDS = new Bounds([55.7448, 37.601], [55.759, 37.632]);
 
 const map = new Map('map', INITIAL_VIEW);
