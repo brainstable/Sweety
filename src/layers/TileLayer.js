@@ -81,7 +81,8 @@ export class TileLayer extends Layer {
     this._tileZoom = null;
     this._tileContainer = null;
     this._retryTimers = new Set();
-    this._tileSize = new Point(Number(this.options.tileSize) || DEFAULT_TILE_SIZE);
+    const tileSize = Number(this.options.tileSize) || DEFAULT_TILE_SIZE;
+    this._tileSize = new Point(tileSize, tileSize);
     this._subdomains = Array.isArray(this.options.subdomains)
       ? this.options.subdomains
       : String(this.options.subdomains).split('');
