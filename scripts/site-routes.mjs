@@ -57,13 +57,13 @@ export const SITE_PAGES = [
 ];
 
 // Файлы сайта, которые отдаются как есть: картинки документации и иконки.
-// Список явный, чтобы в артефакт не попадал генератор assets/brand/build.py.
+// Список явный, чтобы в артефакт не попадал генератор assets/logo/build.py.
 export const SITE_FILES = [
   'docs/demo.webp',
-  'assets/brand/favicon.svg',
-  'assets/brand/favicon.ico',
-  'assets/brand/sweety-mark.svg',
-  'assets/brand/sweety-logo.svg',
+  'assets/logo/favicon.svg',
+  'assets/logo/favicon.ico',
+  'assets/logo/sweety-mark.svg',
+  'assets/logo/sweety-logo.svg',
 ];
 
 // Страницы, которые собирает Vite из demo-HTML (см. vite.site.config.js).
@@ -95,8 +95,8 @@ function splitSuffix(target) {
 function isCopiedFile(pathname) {
   return (
     pathname === '/docs/demo.webp' ||
-    pathname.startsWith('/assets/brand/') ||
-    pathname === '/assets/brand'
+    pathname.startsWith('/assets/logo/') ||
+    pathname === '/assets/logo'
   );
 }
 

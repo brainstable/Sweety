@@ -16,8 +16,8 @@ describe('site routes', () => {
       '/packages/map-edit-plugin/demo/',
       '/packages/map-basemaps/demo/',
       '/docs/demo.webp',
-      '/assets/brand/sweety-logo.svg',
-      '/assets/brand/favicon.ico',
+      '/assets/logo/sweety-logo.svg',
+      '/assets/logo/favicon.ico',
     ]) {
       expect(sitePath(route)).toEqual({ url: route, suffix: '', external: false });
     }

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/brand/sweety-logo.svg" alt="Sweety — модульная JavaScript-библиотека интерактивных карт" width="300">
+  <img src="assets/logo/sweety-logo.svg" alt="Sweety — модульная JavaScript-библиотека интерактивных карт" width="300">
 </p>
 
 <h1 align="center">Sweety</h1>

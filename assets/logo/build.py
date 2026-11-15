@@ -1,7 +1,7 @@
-"""Generates the Sweety brand assets (SVG + PNG) from a single source of truth.
+"""Generates the Sweety logo assets (SVG + PNG) from a single source of truth.
 
 Usage:
-    python assets/brand/build.py
+    python assets/logo/build.py
 
 Dependencies (not part of the Node toolchain, needed only to rebuild assets):
     pip install fonttools uharfbuzz pillow
@@ -26,8 +26,8 @@ from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
-BRAND = Path(__file__).resolve().parent
-CACHE = Path(tempfile.gettempdir()) / "sweety-brand"
+LOGO = Path(__file__).resolve().parent
+CACHE = Path(tempfile.gettempdir()) / "sweety-logo"
 FONT_PATH = CACHE / "Inter-Variable.ttf"
 FONT_URL = "https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz,wght%5D.ttf"
 
@@ -54,7 +54,7 @@ CHROME = chrome_path()
 
 BLUE_500 = "#0EA5E9"
 BLUE_700 = "#0369A1"
-BLUE_900 = "#0B1220"  # brand ink / dark surface
+BLUE_900 = "#0B1220"  # logo ink / dark surface
 INK = "#0F172A"
 SLATE = "#64748B"
 ORANGE = "#F97316"
@@ -207,7 +207,7 @@ def render(svg_text: str, out_png: Path, width: int, height: int, background: st
 
 
 def main() -> None:
-    BRAND.mkdir(parents=True, exist_ok=True)
+    LOGO.mkdir(parents=True, exist_ok=True)
 
     files = {
         "sweety-mark.svg": mark_svg(),
@@ -220,23 +220,23 @@ def main() -> None:
         "favicon.svg": mark_svg(stroke=7.5, handle=8.5),
     }
     for name, text in files.items():
-        (BRAND / name).write_text(text, encoding="utf-8", newline="\n")
+        (LOGO / name).write_text(text, encoding="utf-8", newline="\n")
 
     mark = files["sweety-mark.svg"]
     for size in (512, 256, 128, 64, 32):
-        render(mark, BRAND / f"sweety-mark-{size}.png", size, size)
+        render(mark, LOGO / f"sweety-mark-{size}.png", size, size)
 
     logo = files["sweety-logo.svg"]
     wm = wordmark("Sweety", 600, 44)
     lw = 64 + 20 + wm["advance"] + 6
-    render(logo, BRAND / "sweety-logo.png", round(lw * 3), 210)
-    render(files["sweety-logo-dark.svg"], BRAND / "sweety-logo-dark.png", round(lw * 3), 210, "0B1220")
-    render(files["sweety-logo-mono.svg"], BRAND / "sweety-logo-mono.png", round(lw * 3), 210, "FFFFFF")
+    render(logo, LOGO / "sweety-logo.png", round(lw * 3), 210)
+    render(files["sweety-logo-dark.svg"], LOGO / "sweety-logo-dark.png", round(lw * 3), 210, "0B1220")
+    render(files["sweety-logo-mono.svg"], LOGO / "sweety-logo-mono.png", round(lw * 3), 210, "FFFFFF")
 
     from PIL import Image
 
-    Image.open(BRAND / "sweety-mark-256.png").convert("RGBA").save(
-        BRAND / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)]
+    Image.open(LOGO / "sweety-mark-256.png").convert("RGBA").save(
+        LOGO / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)]
     )
 
     print(json.dumps({"lockupWidth": round(lw, 2), "wordmarkWidth": round(wm["advance"], 2)}, indent=2))

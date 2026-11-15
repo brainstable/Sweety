@@ -29,7 +29,7 @@ export default {
         'styles',
         'docs',
         'demo',
-        'brand',
+        'logo',
         'build',
         'ci',
         'release',

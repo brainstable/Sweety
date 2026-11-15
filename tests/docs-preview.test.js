@@ -117,7 +117,7 @@ describe('docs preview', () => {
     const html = renderMarkdown(
       [
         '<p align="center">',
-        '  <img src="assets/brand/sweety-logo.svg" alt="Sweety" width="300">',
+        '  <img src="assets/logo/sweety-logo.svg" alt="Sweety" width="300">',
         '</p>',
         '',
         '<p align="center" onclick="alert(1)"><a href="javascript:alert(2)">x</a></p>',
@@ -128,7 +128,7 @@ describe('docs preview', () => {
     );
 
     expect(html).toContain('<p align="center">');
-    expect(html).toContain('src="/assets/brand/sweety-logo.svg"');
+    expect(html).toContain('src="/assets/logo/sweety-logo.svg"');
     expect(html).not.toContain('onclick=');
     expect(html).not.toContain('javascript:');
     expect(html).not.toContain('<script>');
@@ -150,8 +150,8 @@ describe('docs preview', () => {
       mapHref: siteMap,
     });
 
-    expect(html).toContain('src="/Sweety/assets/brand/sweety-mark.svg"');
-    expect(html).toContain('href="/Sweety/assets/brand/favicon.svg"');
+    expect(html).toContain('src="/Sweety/assets/logo/sweety-mark.svg"');
+    expect(html).toContain('href="/Sweety/assets/logo/favicon.svg"');
     expect(html).toContain('href="/Sweety/docs/api/" class="active"');
     expect(html).toContain('href="/Sweety/examples/"');
   });

@@ -484,17 +484,17 @@ export function renderPage(doc, body, version, options = {}) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <link rel="icon" href="${mapHref('/assets/brand/favicon.svg')}" type="image/svg+xml">
-    <link rel="alternate icon" href="${mapHref('/assets/brand/favicon.ico')}" sizes="16x16 32x32">
+    <link rel="icon" href="${mapHref('/assets/logo/favicon.svg')}" type="image/svg+xml">
+    <link rel="alternate icon" href="${mapHref('/assets/logo/favicon.ico')}" sizes="16x16 32x32">
     <title>${escapeHtml(pageTitle)}</title>
     <style>${PAGE_STYLES}</style>
   </head>
   <body>
     <div class="layout">
       <aside class="sidebar">
-        <a class="brand" href="${mapHref('/docs/')}">
-          <img class="brand-mark" src="${mapHref('/assets/brand/sweety-mark.svg')}" alt="" width="44" height="44" aria-hidden="true">
-          <span class="brand-text"><strong>Sweety</strong><small>интерактивные карты</small></span>
+        <a class="logo" href="${mapHref('/docs/')}">
+          <img class="logo-mark" src="${mapHref('/assets/logo/sweety-mark.svg')}" alt="" width="44" height="44" aria-hidden="true">
+          <span class="logo-text"><strong>Sweety</strong><small>интерактивные карты</small></span>
         </a>
         <nav class="nav" aria-label="Документация">${navigation}</nav>
         <nav class="nav nav-demos" aria-label="Демо">
@@ -579,7 +579,7 @@ a {
   color: #cbd5e1;
 }
 
-.brand {
+.logo {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -588,7 +588,7 @@ a {
   text-decoration: none;
 }
 
-.brand-mark {
+.logo-mark {
   display: block;
   width: 44px;
   height: 44px;
@@ -597,18 +597,18 @@ a {
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
 }
 
-.brand-text {
+.logo-text {
   display: flex;
   flex-direction: column;
   line-height: 1.25;
 }
 
-.brand-text strong {
+.logo-text strong {
   font-size: 18px;
   letter-spacing: -0.01em;
 }
 
-.brand-text small {
+.logo-text small {
   color: #7f93ad;
   font-size: 11.5px;
   letter-spacing: 0.02em;
@@ -980,7 +980,7 @@ a {
     padding: 20px;
   }
 
-  .brand {
+  .logo {
     margin-bottom: 18px;
   }
 
