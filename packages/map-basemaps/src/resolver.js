@@ -223,6 +223,7 @@ export function resolveBasemap(id, opts = {}, context = {}) {
     provider,
     url,
     maskedUrl: maskUrl(url, key),
+    key,
     keyMasked: maskKey(key),
     variant: variant.name,
     variantValue: variant.variantValue,

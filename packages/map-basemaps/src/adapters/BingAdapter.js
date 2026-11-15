@@ -13,7 +13,11 @@ export class BingAdapter extends TileSourceAdapter {
     const subdomain =
       subdomains[Math.abs((coords.x * 7 + coords.y * 11 + coords.z * 13) % subdomains.length)];
     const type = context.variantValue || 'a';
-    return `https://t${subdomain}.tiles.virtualearth.net/tiles/${type}${quadKey(coords)}.jpeg?g=1`;
+    const key = context.key || context.adapterOptions?.key;
+    return (
+      `https://t${subdomain}.tiles.virtualearth.net/tiles/${type}${quadKey(coords)}.jpeg?g=1` +
+      (key ? `&key=${encodeURIComponent(key)}` : '')
+    );
   }
 }
 

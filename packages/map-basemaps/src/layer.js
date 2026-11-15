@@ -43,6 +43,7 @@ export class BasemapTileLayer extends TileLayer {
         url: this.resolved.url,
         variantValue: this.resolved.variantValue,
         retina: this.resolved.retina,
+        key: this.resolved.key,
         adapterOptions: this.resolved.adapterOptions,
       });
     } catch {
