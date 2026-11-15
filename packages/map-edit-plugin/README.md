@@ -412,22 +412,3 @@ npm run build    # ESM + UMD + CSS
 Пакет собирается с `peerDependencies: { "sweety-map": "^0.1.0" }`: ядро не
 бандлится. Внешний вид подключается отдельным файлом `map-edit-plugin.css`.
 UMD-глобал — `SweetyEdit` (ядро — `Sweety`).
-
-## Миграция с Leaflet.draw / Leaflet.Editable
-
-Плагин не зависит от Leaflet и не использует глобальный `L`. Соответствия:
-
-| Было                               | Стало                                              |
-| ---------------------------------- | -------------------------------------------------- |
-| `new L.Draw.Polygon(map).enable()` | `editor.startDrawing('polygon')`                   |
-| `new L.Edit.Poly(layer).enable()`  | `editor.enableEdit(layer); editor.setMode('edit')` |
-| `layer.editing.enable()`           | `editor.enableEdit(layer)`                         |
-| `draw:created`                     | `create` / `draw:completed`                        |
-| `draw:edited`                      | `update`                                           |
-| `draw:deleted`                     | `delete`                                           |
-| `L.EditToolbar.Edit`               | `EditControl` (встроен)                            |
-| `L.Draw.Event.*`                   | строковые события `draw:*`                         |
-
-Отличия: редактор — экземпляр, а не глобальный синглтон; стили — CSS-переменные;
-undo/redo и snapping встроены. Состояние хранится в `EditPlugin`, поэтому на
-одной странице можно держать несколько независимых редакторов.
