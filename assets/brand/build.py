@@ -179,46 +179,6 @@ def lockup_svg(text_color: str, mono: str | None = None) -> str:
 """
 
 
-def social_svg(tagline: str = "Dependency-free interactive maps for the web") -> str:
-    wm = wordmark("Sweety", 700, 104)
-    tag = wordmark(tagline, 450, 34)
-    mark_size = 176
-    gap = 44
-    title_x = mark_size + gap
-    block_w = max(title_x + wm["advance"], title_x + tag["advance"])
-    x0 = (1280 - block_w) / 2
-    title_top = 320 - (wm["capHeight"] + 58 + tag["capHeight"]) / 2
-    baseline = title_top + wm["capHeight"]
-    tag_baseline = baseline + 58
-    mark_top = title_top + (wm["capHeight"] - mark_size) / 2
-    grid = "\n".join(
-        f'<line x1="{x}" y1="0" x2="{x}" y2="640" stroke="#FFFFFF" stroke-opacity="0.045" stroke-width="1"/>'
-        for x in range(0, 1281, 80)
-    )
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="Sweety — {tagline}">
-  <defs>
-    {TILE_GRADIENT}
-    <linearGradient id="sweety-bg" x1="0" y1="0" x2="1280" y2="640" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#16294A"/><stop offset="1" stop-color="{BLUE_900}"/>
-    </linearGradient>
-  </defs>
-  <rect width="1280" height="640" fill="url(#sweety-bg)"/>
-  {grid}
-  <g transform="translate({x0:.2f} {mark_top:.2f}) scale({mark_size / 64:.3f})">
-    <rect width="64" height="64" rx="15" fill="url(#sweety-tile)"/>
-    {route(7)}
-    {handles(ORANGE)}
-  </g>
-  <g transform="translate({x0 + title_x:.2f} {baseline:.2f})">
-    <path d="{wm['path']}" fill="#FFFFFF"/>
-  </g>
-  <g transform="translate({x0 + title_x:.2f} {tag_baseline:.2f})">
-    <path d="{tag['path']}" fill="#94A3B8"/>
-  </g>
-</svg>
-"""
-
-
 def render(svg_text: str, out_png: Path, width: int, height: int, background: str = "00000000") -> None:
     out_png = out_png.resolve()
     out_png.parent.mkdir(parents=True, exist_ok=True)
@@ -258,7 +218,6 @@ def main() -> None:
         "sweety-logo-mono.svg": lockup_svg(BLUE_900, mono=BLUE_900),
         "sweety-logo-mono-light.svg": lockup_svg("#FFFFFF", mono="#FFFFFF"),
         "favicon.svg": mark_svg(stroke=7.5, handle=8.5),
-        "sweety-social.svg": social_svg(),
     }
     for name, text in files.items():
         (BRAND / name).write_text(text, encoding="utf-8", newline="\n")
@@ -273,8 +232,6 @@ def main() -> None:
     render(logo, BRAND / "sweety-logo.png", round(lw * 3), 210)
     render(files["sweety-logo-dark.svg"], BRAND / "sweety-logo-dark.png", round(lw * 3), 210, "0B1220")
     render(files["sweety-logo-mono.svg"], BRAND / "sweety-logo-mono.png", round(lw * 3), 210, "FFFFFF")
-
-    render(files["sweety-social.svg"], BRAND / "social-preview.png", 1280, 640)
 
     from PIL import Image
 

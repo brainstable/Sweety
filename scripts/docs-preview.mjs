@@ -20,7 +20,6 @@ const DOC_NAV = [
   { id: 'api', title: 'API Reference', href: '/docs/API.md' },
   { id: 'architecture', title: 'Архитектура', href: '/docs/ARCHITECTURE.md' },
   { id: 'git', title: 'Git-процесс', href: '/docs/GIT-WORKFLOW.md' },
-  { id: 'brand', title: 'Бренд', href: '/docs/BRAND.md' },
   { id: 'changelog', title: 'CHANGELOG', href: '/CHANGELOG.md' },
 ];
 
@@ -71,15 +70,6 @@ const DOC_PAGES = new Map([
       title: 'Git-процесс',
       file: 'docs/GIT-WORKFLOW.md',
       basePath: '/docs/GIT-WORKFLOW.md',
-    },
-  ],
-  [
-    '/docs/brand.md',
-    {
-      id: 'brand',
-      title: 'Бренд',
-      file: 'docs/BRAND.md',
-      basePath: '/docs/BRAND.md',
     },
   ],
 ]);

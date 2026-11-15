@@ -468,7 +468,6 @@ docs/          архитектура, API, Git-процесс
 - [API Reference](docs/API.md)
 - [Архитектура](docs/ARCHITECTURE.md)
 - [Git-процесс](docs/GIT-WORKFLOW.md)
-- [Бренд и логотип](docs/BRAND.md)
 - [CHANGELOG](CHANGELOG.md)
 
 ## Лицензия
