@@ -1,0 +1,84 @@
+# Changelog
+
+Все заметные изменения проекта документируются в этом файле.
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
+версии следуют [Semantic Versioning](https://semver.org/lang/ru/).
+
+## [0.1.0] — 2026-11-15
+
+Первая публичная версия Sweety: модульная картографическая библиотека без
+runtime-зависимостей.
+
+### Добавлено
+
+- **Ядро карты**: `Map`, `Evented`, `Handler`, `LatLng`, `Point`, `Bounds`.
+  Инициализация по id или `HTMLElement`, панели, `setView`, `panBy`, `panTo`,
+  `flyTo`, `fitBounds`, `flyToBounds`, `getBoundsZoom`, `maxBounds`,
+  ограничения зума и адаптация к размеру контейнера.
+- **Проекции**: `Projection`, `CRS`, `Transformation`, EPSG:3857 и EPSG:4326,
+  корректная обратная формула Меркатора и ограничение широты у полюсов.
+- **Взаимодействия**: перетаскивание указателем с инерцией, зум колесом с
+  debounce, двойной клик, pinch-зум двумя пальцами, CSS-анимация зума,
+  `prefers-reduced-motion`.
+- **Тайлы**: `TileLayer` с XYZ-шаблоном, субдоменами, TMS, retina `{r}`,
+  `{-y}`, `maxNativeZoom`, кэшем изображений, повторами загрузки,
+  `errorTileUrl` и виртуализацией видимых тайлов.
+- **Маркеры**: `Marker` с `Icon` и `DivIcon`, draggable, клавиатурной
+  активацией, z-index, прозрачностью, popup и tooltip.
+- **Оверлеи**: `Popup` и `Tooltip` с HTML/DOM/функциональным контентом,
+  позиционированием, авто-закрытием, Escape, auto-pan и событиями.
+- **Векторы**: `Polyline`, `Polygon` с отверстиями, `Circle`, `Rectangle`,
+  общий SVG-рендерер и Canvas-рендерер с hit-testing.
+- **GeoJSON**: `GeoJSONLayer` с FeatureCollection, Feature, GeometryCollection,
+  MultiPoint, MultiLineString, MultiPolygon, style-функцией, `pointToLayer`,
+  `onEachFeature`, `filter`, `coordsToLatLng` и экспортом.
+- **Группы**: `LayerGroup` и `FeatureGroup` с общими попапами, tooltip-ами,
+  стилями и всплытием событий.
+- **Контролы**: `ZoomControl`, `AttributionControl`, `ScaleControl`,
+  `LayersControl` и кастомные контролы в четырёх углах.
+- **Плагины**: `definePlugin`, `use`, `unuse`, реестр и `Map.addInitHook`.
+- **Публичный API**: ESM- и UMD-сборки, namespace `Sweety`, JSDoc на русском,
+  `sweety.css`.
+
+### Производительность
+
+- Виртуализация тайлов: в DOM только видимая область и `keepBuffer`.
+- `requestAnimationFrame` для инерции, `flyTo`, `panTo`, Canvas и resize.
+- `rafThrottle` для `mousemove`.
+- Canvas-рендерер для больших наборов векторов, объединение кадров.
+- LRU-подобный кэш изображений тайлов.
+- Режим `updateWhenIdle` у `TileLayer`.
+
+### Документация
+
+- Русский README с быстрым стартом, API и примерами.
+- `docs/API.md` — полный справочник.
+- `docs/ARCHITECTURE.md` — архитектура, координатные системы, рендеринг.
+- `docs/GIT-WORKFLOW.md` — ветвление, Conventional Commits, hooks, CI, релизы.
+- `CONTRIBUTING.md`, `SECURITY.md`.
+- Интерактивное демо `examples/index.html`: OSM, маркеры, полигон, GeoJSON,
+  Canvas.
+
+### Тестирование
+
+- 135 тестов Vitest + jsdom.
+- Покрытие строк около 89%, функций — около 85%.
+- Тесты геометрии, проекций, событий, карты, жестов, тайлов, маркеров,
+  оверлеев, векторов, Canvas, GeoJSON, контролов, плагинов и публичного API.
+
+### Инфраструктура
+
+- Vite 8, ESM + UMD + CSS, source maps, минификация Oxc.
+- ESLint, Prettier, Vitest, commitlint, husky, lint-staged.
+- GitHub Actions: lint, format check, coverage, build, verify, `npm pack`.
+- Шаблоны PR и issue, Dependabot, защита веток.
+
+### Известные ограничения
+
+- Нет SSR и WebGL.
+- GeoJSON не репроецируется из произвольных CRS.
+- HTML в попапах и tooltip-ах не санитизируется библиотекой.
+- Для идеальной резкости при непрерывном `flyTo` требуются дробные тайлы,
+  которые библиотека не загружает.
+
+[0.1.0]: https://github.com/brainstable/sweety/releases/tag/v0.1.0
