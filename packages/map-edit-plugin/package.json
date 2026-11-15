@@ -1,0 +1,69 @@
+{
+  "name": "sweety-map-edit-plugin",
+  "version": "0.1.0",
+  "description": "Плагин редактирования и рисования геометрии для Sweety: режимы, вершины, undo/redo, GeoJSON.",
+  "type": "module",
+  "main": "./dist/map-edit-plugin.umd.cjs",
+  "module": "./dist/map-edit-plugin.es.js",
+  "types": "./types/index.d.ts",
+  "style": "./dist/map-edit-plugin.css",
+  "unpkg": "./dist/map-edit-plugin.umd.js",
+  "jsdelivr": "./dist/map-edit-plugin.umd.js",
+  "homepage": "https://github.com/brainstable/sweety/tree/main/packages/map-edit-plugin#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brainstable/sweety.git",
+    "directory": "packages/map-edit-plugin"
+  },
+  "bugs": {
+    "url": "https://github.com/brainstable/sweety/issues"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/map-edit-plugin.es.js",
+      "require": "./dist/map-edit-plugin.umd.cjs"
+    },
+    "./style.css": "./dist/map-edit-plugin.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "keywords": [
+    "sweety",
+    "map",
+    "edit",
+    "draw",
+    "geometry",
+    "geojson",
+    "plugin"
+  ],
+  "author": "Brainstable",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "peerDependencies": {
+    "sweety-map": "^0.1.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "scripts": {
+    "dev": "vite --open /demo/",
+    "build": "vite build && node scripts/copy-umd.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write ."
+  }
+}
