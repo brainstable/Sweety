@@ -90,4 +90,4 @@ jobs:
         run: npm --prefix packages/map-edit-plugin run size
 
       - name: Check plugin package contents
-        run: npm --prefix packages/map-edit-plugin pack --dry-run
+        run: npm pack ./packages/map-edit-plugin --dry-run
