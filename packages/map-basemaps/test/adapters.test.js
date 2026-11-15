@@ -33,6 +33,10 @@ describe('adapters: XYZ/Google/Bing', () => {
     const resolved = resolveBasemap('bing');
     const url = getTileSource('bing').buildUrl(resolved.provider, { x: 3, y: 5, z: 3 }, resolved);
     expect(url).toContain('/a213.jpeg');
+
+    const keyed = resolveBasemap('bing', { key: 'bing-key-123' });
+    const keyedUrl = getTileSource('bing').buildUrl(keyed.provider, { x: 3, y: 5, z: 3 }, keyed);
+    expect(keyedUrl).toContain('key=bing-key-123');
   });
 
   it('Yandex передаёт слой', () => {

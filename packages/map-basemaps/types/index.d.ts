@@ -136,6 +136,7 @@ export interface ResolvedBasemap {
   provider: ProviderDef;
   url: string;
   maskedUrl: string;
+  key: string | null;
   keyMasked: string;
   variant: string;
   variantValue: string;
