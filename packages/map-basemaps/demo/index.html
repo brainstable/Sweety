@@ -155,40 +155,86 @@
   <body>
     <script data-demo-guard data-demo-url="http://localhost:5173/packages/map-basemaps/demo/">
       (function () {
-        if (location.protocol !== 'file:') return;
         var url = document.currentScript.getAttribute('data-demo-url');
-        var timer = setTimeout(showGuard, 1100);
-        try {
-          fetch(url, { mode: 'no-cors', cache: 'no-store' })
-            .then(function () {
-              clearTimeout(timer);
-              location.replace(url);
-            })
-            .catch(function () {});
-        } catch (error) {
-          /* fetch недоступен — остаётся подсказка */
-        }
 
-        function showGuard() {
+        // Модуль демо вызывает этот хук последней строкой. Пока он не вызван,
+        // страница считается не запустившейся — вместо пустой карты покажем причину.
+        window.__sweetyDemoReady = function () {
+          window.__sweetyDemoStarted = true;
+        };
+
+        function showFailure(title, message, command) {
+          if (document.getElementById('demo-failure')) return;
           var overlay = document.createElement('div');
+          overlay.id = 'demo-failure';
           overlay.setAttribute('role', 'alert');
           overlay.style.cssText =
             'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;background:#0f172a;color:#e2e8f0;font:15px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;';
           overlay.innerHTML =
-            '<div style="max-width:580px">' +
-            '<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25">Демо запускается через Vite</h1>' +
-            '<p style="margin:0 0 14px;color:#94a3b8">Файл открыт напрямую с диска. ES-модули в этом режиме блокируются браузером, поэтому карта остаётся пустой.</p>' +
-            '<p style="margin:0 0 10px">Запустите dev-сервер:</p>' +
-            '<pre style="margin:0 0 16px;padding:12px 14px;border-radius:8px;background:#1e293b;color:#e2e8f0;overflow:auto">npm --prefix packages/map-basemaps run dev</pre>' +
-            '<p style="margin:0 0 16px">или откройте уже запущенный сервер:<br><a style="color:#38bdf8" href="' +
+            '<div style="max-width:600px">' +
+            '<h1 style="margin:0 0 10px;font-size:22px;line-height:1.25">' +
+            title +
+            '</h1>' +
+            '<p style="margin:0 0 14px;color:#94a3b8">' +
+            message +
+            '</p>' +
+            '<p style="margin:0 0 10px">Запустите dev-сервер в корне репозитория:</p>' +
+            '<pre style="margin:0 0 16px;padding:12px 14px;border-radius:8px;background:#1e293b;color:#e2e8f0;overflow:auto">' +
+            command +
+            '</pre>' +
+            '<p style="margin:0 0 16px">и откройте<br><a style="color:#38bdf8" href="' +
             url +
             '">' +
             url +
             '</a></p>' +
-            '<p style="margin:0;color:#64748b;font-size:13px">Подсказка: в Vite-сервере этот файл открывается по тому же адресу, но через http://, а не file://.</p>' +
+            '<p style="margin:0;color:#64748b;font-size:13px">Если сервер уже запущен, причина ошибки — в консоли браузера (F12) и в терминале Vite.</p>' +
             '</div>';
           document.documentElement.appendChild(overlay);
         }
+
+        if (location.protocol === 'file:') {
+          showFailure(
+            'Демо открыто с диска',
+            'Браузер блокирует ES-модули по file://, поэтому карта не запускается. Откройте демо через dev-сервер.',
+            'npm run dev',
+          );
+          return;
+        }
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            if (window.__sweetyDemoStarted) return;
+            var target = event.target;
+            if (target && target.tagName === 'SCRIPT') {
+              showFailure(
+                'Модуль демо не загрузился',
+                'Dev-сервер вернул ошибку при загрузке скрипта — обычно это неразрешённый импорт.',
+                'npm run dev',
+              );
+            }
+          },
+          true,
+        );
+
+        window.addEventListener('unhandledrejection', function () {
+          if (!window.__sweetyDemoStarted) {
+            showFailure(
+              'Демо не запустилось',
+              'При инициализации карты произошла ошибка.',
+              'npm run dev',
+            );
+          }
+        });
+
+        setTimeout(function () {
+          if (window.__sweetyDemoStarted) return;
+          showFailure(
+            'Демо не запустилось',
+            'Модуль демо не выполнился за 8 секунд. Проверьте, что dev-сервер запущен и не показывает ошибок.',
+            'npm run dev',
+          );
+        }, 8000);
       })();
     </script>
     <div id="map"></div>
@@ -394,6 +440,7 @@
       window.basemaps = basemaps;
       sync();
       log('ready', 'basemaps installed');
+      window.__sweetyDemoReady();
     </script>
   </body>
 </html>

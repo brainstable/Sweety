@@ -399,17 +399,24 @@ new EditPlugin(map, {
 ## Разработка
 
 ```bash
-cd packages/map-edit-plugin
-npm run dev      # demo с Vite
+npm run dev      # из корня: demo пакетов на /packages/<pkg>/demo/
 npm run test     # vitest + jsdom
 npm run build    # ESM + UMD + CSS
 ```
 
-Демо открывается через dev-сервер:
-`http://localhost:5173/packages/map-edit-plugin/demo/`. При открытии
-`demo/index.html` двойным щелчком срабатывает защита: страница либо
-перенаправляет на запущенный Vite, либо показывает команду запуска вместо
-пустой карты.
+Корневой dev-сервер резолвит `sweety-map` в `src/index.js` (см. `resolve.alias`
+в корневом `vite.config.js`), поэтому demo пакетов работают без сборки ядра.
+
+Демо редактора открывается по адресу
+`http://localhost:5173/packages/map-edit-plugin/demo/`. Свой dev-сервер пакета
+(`cd packages/map-edit-plugin && npm run dev`) отдаёт то же демо по
+`http://localhost:<port>/demo/`; если корневой сервер уже занял 5173, Vite
+возьмёт следующий свободный порт.
+
+Если открыть `demo/index.html` с диска, карта не запустится: браузер блокирует
+ES-модули по `file://`. Вместо пустой страницы демо показывает команду запуска.
+Если модуль не загрузился через сервер, демо выводит причину ошибки со ссылкой
+на консоль браузера и терминал Vite.
 
 Тесты покрывают `GeometryUtils`, `CommandStack`, создание/редактирование
 полигонов, drag вершин и тела, midpoint, круг, прямоугольник, GeoJSON-группы,
