@@ -281,6 +281,20 @@ export class Marker extends Layer {
     return this._iconElement || null;
   }
 
+  /**
+   * GeoJSON representation of the marker.
+   * @returns {object}
+   */
+  toGeoJSON() {
+    const coordinates = [this._latlng.lng, this._latlng.lat];
+    if (this._latlng.alt) coordinates.push(this._latlng.alt);
+    return {
+      type: 'Feature',
+      properties: this.feature?.properties ? { ...this.feature.properties } : {},
+      geometry: { type: 'Point', coordinates },
+    };
+  }
+
   /** @private */
   _initDrag() {
     if (!this._iconElement || this._dragBound) return;
