@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createDocsMiddleware, renderMarkdown } from '../scripts/docs-preview.mjs';
+import { createDocsMiddleware, renderMarkdown, renderPage } from '../scripts/docs-preview.mjs';
+import { siteHref } from '../scripts/site-routes.mjs';
+
+// Сборка сайта передаёт в рендер маппинг «путь в репозитории → URL страницы».
+const siteMap = (path) => siteHref(path, '/Sweety/');
 
 function runMiddleware(url) {
   const middleware = createDocsMiddleware({ root: process.cwd(), version: '0.1.0' });
@@ -128,5 +132,27 @@ describe('docs preview', () => {
     expect(html).not.toContain('onclick=');
     expect(html).not.toContain('javascript:');
     expect(html).not.toContain('<script>');
+  });
+
+  it('переписывает ссылки документации в маршруты сайта', () => {
+    const html = renderMarkdown('[API](docs/API.md) ![Карта](docs/demo.webp)', {
+      basePath: '/README.md',
+      mapHref: siteMap,
+    });
+
+    expect(html).toContain('href="/Sweety/docs/api/"');
+    expect(html).toContain('src="/Sweety/docs/demo.webp"');
+  });
+
+  it('подставляет базовый путь публикации в навигацию и иконки страницы', () => {
+    const html = renderPage({ id: 'api', title: 'API Reference' }, '<p>API</p>', '0.1.0', {
+      base: '/Sweety/',
+      mapHref: siteMap,
+    });
+
+    expect(html).toContain('src="/Sweety/assets/brand/sweety-mark.svg"');
+    expect(html).toContain('href="/Sweety/assets/brand/favicon.svg"');
+    expect(html).toContain('href="/Sweety/docs/api/" class="active"');
+    expect(html).toContain('href="/Sweety/examples/"');
   });
 });

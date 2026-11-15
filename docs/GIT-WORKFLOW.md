@@ -39,6 +39,7 @@ git push -u origin develop
 - `commitlint.config.js`;
 - `.husky/commit-msg`, `.husky/pre-commit`;
 - `.github/workflows/ci.yml`;
+- `.github/workflows/pages.yml`;
 - `.github/pull_request_template.md`;
 - `.github/ISSUE_TEMPLATE/*`.
 
@@ -214,6 +215,12 @@ echo "bad message" | npx commitlint
 7. `npm run build`;
 8. проверка UMD-бандла;
 9. загрузка `dist/` как artifact.
+
+Документация и демо публикуются отдельным workflow `.github/workflows/pages.yml`
+при push в `main`: `npm run build:site` собирает `dist-site/` (markdown → HTML и
+demo-страницы пакетов), артефакт уходит в GitHub Pages. Адрес сайта —
+`https://brainstable.github.io/Sweety/`. Локальная проверка перед пушем:
+`npm run build:site && npm run preview:site`.
 
 Защита веток в GitHub:
 

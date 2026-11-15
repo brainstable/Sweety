@@ -118,6 +118,14 @@ Vite откроет `http://localhost:5173/examples/`. Демо содержит
 запустится (браузер блокирует ES-модули по `file://`) — вместо пустой страницы
 демо покажет команду запуска.
 
+Статическая сборка документации и демо (тот же сайт, что публикуется на GitHub
+Pages) собирается локально так:
+
+```bash
+npm run build:site    # dist-site/
+npm run preview:site  # http://localhost:4173/
+```
+
 ![Демонстрационная карта Sweety](docs/demo.webp)
 
 ## Основные концепции
@@ -465,6 +473,7 @@ docs/          архитектура, API, Git-процесс
 
 ## Документация
 
+- [Онлайн-документация и демо](https://brainstable.github.io/Sweety/)
 - [API Reference](docs/API.md)
 - [Архитектура](docs/ARCHITECTURE.md)
 - [Git-процесс](docs/GIT-WORKFLOW.md)

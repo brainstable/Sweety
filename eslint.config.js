@@ -3,7 +3,14 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['dist/**', 'packages/*/dist/**', 'coverage/**', 'node_modules/**', '.husky/_/**'],
+    ignores: [
+      'dist/**',
+      'dist-site/**',
+      'packages/*/dist/**',
+      'coverage/**',
+      'node_modules/**',
+      '.husky/_/**',
+    ],
   },
   js.configs.recommended,
   {
