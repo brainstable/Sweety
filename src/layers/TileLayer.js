@@ -380,7 +380,8 @@ export class TileLayer extends Layer {
 
   /** @returns {string|null} */
   getAttribution() {
-    return this.options.attribution || null;
+    const value = this.options.attribution;
+    return (typeof value === 'function' ? value.call(this) : value) || null;
   }
 
   /** Remove and recreate all tiles. @returns {this} */

@@ -9,6 +9,8 @@ import { DoubleClickZoom } from '../handlers/DoubleClickZoom.js';
 import { TouchZoom } from '../handlers/TouchZoom.js';
 import { SVG } from '../layers/vector/SVG.js';
 import { Canvas } from '../layers/vector/Canvas.js';
+import { ZoomControl } from '../controls/Zoom.js';
+import { AttributionControl } from '../controls/Attribution.js';
 import {
   addClass,
   create,
@@ -174,6 +176,7 @@ export class Map extends Evented {
 
     this._loaded = true;
     this._initHandlers();
+    this._initControls();
     this.fire('load');
     this.fire('ready');
 
@@ -197,6 +200,15 @@ export class Map extends Evented {
     this._createPane('marker', 'sweety-marker-pane');
     this._createPane('tooltip', 'sweety-tooltip-pane');
     this._createPane('popup', 'sweety-popup-pane');
+
+    this._controlCorners = Object.create(null);
+    for (const position of ['topleft', 'topright', 'bottomleft', 'bottomright']) {
+      this._controlCorners[position] = create(
+        'div',
+        `sweety-control-corner sweety-${position}`,
+        this._container,
+      );
+    }
 
     this._size = this._getSize();
   }
@@ -251,6 +263,18 @@ export class Map extends Evented {
     this._addHandler('scrollWheelZoom', ScrollWheelZoom, this.options.scrollWheelZoom);
     this._addHandler('doubleClickZoom', DoubleClickZoom, this.options.doubleClickZoom);
     this._addHandler('touchZoom', TouchZoom, this.options.touchZoom);
+  }
+
+  /** @private */
+  _initControls() {
+    if (this.options.zoomControl) this.addControl(new ZoomControl());
+    if (this.options.attributionControl) {
+      const options = {};
+      if (this.options.attributionPrefix !== undefined) {
+        options.prefix = this.options.attributionPrefix;
+      }
+      this.addControl(new AttributionControl(options));
+    }
   }
 
   /**
@@ -419,6 +443,8 @@ export class Map extends Evented {
 
     for (const id of Object.keys(this._layers)) this.removeLayer(this._layers[id]);
     for (const control of [...this._controls]) this.removeControl(control);
+    for (const corner of Object.values(this._controlCorners)) remove(corner);
+    this._controlCorners = Object.create(null);
     for (const handler of Object.values(this._handlers)) handler.disable();
 
     off(
@@ -1090,8 +1116,20 @@ export class Map extends Evented {
     if (control._map) return this;
     control._map = this;
     this._controls.push(control);
-    const container = control.onAdd(this);
-    if (container) control._container = container;
+
+    try {
+      const container = control.onAdd(this);
+      if (container) {
+        control._container = container;
+        const position = control.getPosition ? control.getPosition() : 'topright';
+        const corner = this._controlCorners[position] || this._controlCorners.topright;
+        corner.appendChild(container);
+      }
+    } catch (error) {
+      this._controls.pop();
+      control._map = null;
+      throw error;
+    }
     return this;
   }
 
@@ -1104,8 +1142,23 @@ export class Map extends Evented {
     const index = this._controls.indexOf(control);
     if (index === -1) return this;
     if (typeof control.onRemove === 'function') control.onRemove(this);
+    control._container?.remove();
     this._controls.splice(index, 1);
     control._map = null;
+    return this;
+  }
+
+  /**
+   * Move a control to its current position corner.
+   * @param {import('../controls/Control.js').Control} control
+   * @returns {this}
+   * @private
+   */
+  _repositionControl(control) {
+    if (!this._controls.includes(control) || !control._container) return this;
+    const position = control.getPosition ? control.getPosition() : 'topright';
+    const corner = this._controlCorners[position] || this._controlCorners.topright;
+    if (corner) corner.appendChild(control._container);
     return this;
   }
 
