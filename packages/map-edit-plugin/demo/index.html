@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sweety — редактор геометрии</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        background: #eef2f7;
+        color: #0f172a;
+      }
+      #map {
+        height: 100vh;
+      }
+      aside {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        border-left: 1px solid #d8e0eb;
+        background: #fff;
+      }
+      .panel-head {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid #e6ebf3;
+      }
+      .panel-head h1 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      .panel-head p {
+        margin: 0;
+        color: #5b6778;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .hints {
+        display: grid;
+        gap: 6px;
+        padding: 12px 18px;
+        border-bottom: 1px solid #e6ebf3;
+        font-size: 12px;
+        color: #475569;
+      }
+      .hints code {
+        padding: 1px 4px;
+        border-radius: 4px;
+        background: #f1f5f9;
+        font-size: 11px;
+      }
+      #log {
+        flex: 1;
+        overflow: auto;
+        padding: 10px 14px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        color: #334155;
+      }
+      .log-line {
+        padding: 2px 0;
+        border-bottom: 1px dashed #eef2f7;
+        word-break: break-word;
+      }
+      .log-line b {
+        color: #2563eb;
+        font-weight: 600;
+      }
+      @media (max-width: 760px) {
+        body {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(0, 1fr) 260px;
+        }
+        #map {
+          height: 100%;
+        }
+        aside {
+          border-left: 0;
+          border-top: 1px solid #d8e0eb;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <aside>
+      <div class="panel-head">
+        <h1>Редактор геометрии</h1>
+        <p>
+          Выберите «Редактировать», затем объект — появятся вершины. Тяните вершины, середины
+          сегментов или тело фигуры. Изменения пишутся в журнал.
+        </p>
+      </div>
+      <div class="hints">
+        <span><code>Shift</code> — мультивыбор</span>
+        <span><code>Enter</code> / двойной клик — завершить</span>
+        <span><code>Esc</code> — отменить вершину/черновик</span>
+        <span><code>Ctrl+Z</code> / <code>Ctrl+Shift+Z</code> — undo/redo</span>
+      </div>
+      <div id="log" aria-live="polite"></div>
+    </aside>
+
+    <script type="module">
+      import { Circle, Map, Marker, Polygon, Rectangle, TileLayer, Bounds } from 'sweety-map';
+      import { EditPlugin } from '../src/index.js';
+
+      const map = new Map('map', {
+        center: [55.7558, 37.6173],
+        zoom: 11,
+        zoomControl: true,
+      });
+
+      new TileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map);
+
+      const polygon = new Polygon([
+        [
+          [55.7502, 37.6115],
+          [55.7504, 37.6268],
+          [55.7438, 37.6266],
+          [55.7436, 37.6115],
+        ],
+      ]).addTo(map);
+      polygon.bindPopup('Полигон: тяните вершины и середины сегментов');
+
+      const line = new Polygon([
+        [
+          [55.7608, 37.6012],
+          [55.7621, 37.6095],
+          [55.7595, 37.6122],
+        ],
+      ]).addTo(map);
+      line.bindPopup('Треугольник');
+
+      const circle = new Circle([55.7658, 37.6231], 850).addTo(map);
+      circle.bindPopup('Круг: центр и ручка радиуса');
+
+      const rectangle = new Rectangle(
+        new Bounds([
+          [55.7415, 37.6005],
+          [55.7462, 37.6105],
+        ]),
+      ).addTo(map);
+      rectangle.bindPopup('Прямоугольник: 4 угла');
+
+      new Marker([55.7525, 37.6237]).addTo(map).bindPopup('Маркер: перетаскивается за иконку');
+
+      const logElement = document.getElementById('log');
+      const log = (type, details = '') => {
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        line.innerHTML = `<b>${type}</b>${details ? ` · ${details}` : ''}`;
+        logElement.prepend(line);
+      };
+
+      const editor = new EditPlugin(map, {
+        position: 'topleft',
+        undoRedo: true,
+        snap: { enabled: true, gridSize: 8, toVertices: true, tolerance: 8 },
+        limits: { polygon: { min: 3, max: 1000 }, polyline: { min: 2, max: 1000 } },
+        i18n: {
+          select: 'Выбрать',
+          edit: 'Редактировать',
+          delete: 'Удалить',
+          drawPolygon: 'Полигон',
+          drawPolyline: 'Линия',
+          drawMarker: 'Маркер',
+          drawCircle: 'Круг',
+          drawRectangle: 'Прямоугольник',
+          finish: 'Готово',
+          cancel: 'Отмена',
+          hintPolygon: 'Клик — вершина, клик по первой — замыкание, Enter — готово',
+          hintPolyline: 'Клик — вершина, Enter или двойной клик — готово',
+        },
+      });
+
+      [polygon, line, circle, rectangle].forEach((layer) => editor.enableEdit(layer));
+
+      editor.on('modechange', ({ mode, previousMode }) =>
+        log('modechange', `${previousMode} → ${mode}`),
+      );
+      editor.on('select', ({ layer }) => log('select', layer.toGeoJSON().geometry.type));
+      editor.on('unselect', () => log('unselect'));
+      editor.on('update', ({ action, layer }) => {
+        const json = layer.toGeoJSON();
+        log('update', `${action} · ${json.geometry.type}`);
+      });
+      editor.on('create', ({ layer, type }) =>
+        log('create', `${type} · ${layer.toGeoJSON().geometry.type}`),
+      );
+      editor.on('delete', ({ layer }) => log('delete', layer.toGeoJSON().geometry.type));
+      editor.on('selfintersection', ({ layer }) =>
+        log('selfintersection', layer.toGeoJSON().geometry.type),
+      );
+      editor.on('draw:started', ({ type }) => log('draw:started', type));
+      editor.on('draw:completed', ({ type }) => log('draw:completed', type));
+      editor.on('draw:canceled', ({ type, reason }) => log('draw:canceled', `${type} · ${reason}`));
+
+      window.editor = editor;
+      window.map = map;
+      log('ready', 'плагин установлен');
+    </script>
+  </body>
+</html>
