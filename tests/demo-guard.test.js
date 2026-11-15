@@ -12,14 +12,31 @@ const DEMOS = [
   },
 ];
 
-describe('demo pages: file:// fallback', () => {
+describe('demo pages: diagnostics instead of a blank page', () => {
   for (const demo of DEMOS) {
-    it(`${demo.path} объясняет запуск через Vite вместо пустой карты`, () => {
+    it(`${demo.path} показывает причину, если модуль не запустился`, () => {
       const html = readFileSync(demo.path, 'utf8');
+
+      // Подсказка при открытии с диска.
       expect(html).toContain('data-demo-guard');
       expect(html).toContain(`data-demo-url="${demo.url}"`);
-      expect(html).toContain('Демо запускается через Vite');
-      expect(html).toContain("location.protocol !== 'file:'");
+      expect(html).toContain('Демо открыто с диска');
+      expect(html).toContain("location.protocol === 'file:'");
+
+      // Модуль отмечает успешный старт; сторожевой таймер ловит ошибку загрузки.
+      expect(html).toContain('window.__sweetyDemoReady');
+      expect(html).toContain('window.__sweetyDemoReady();');
+      expect(html).toContain("id = 'demo-failure'");
+      expect(html).toContain('Модуль демо не загрузился');
+      expect(html).toContain('npm run dev');
+    });
+
+    it(`${demo.path} открывает демо по корневому dev-серверу`, () => {
+      const html = readFileSync(demo.path, 'utf8');
+      // Корневой `npm run dev` обслуживает demo-страницы пакетов; адрес в
+      // подсказке должен совпадать с тем, что документирует README.
+      expect(demo.url.startsWith('http://localhost:5173/packages/')).toBe(true);
+      expect(html).toContain(demo.url);
     });
   }
 });

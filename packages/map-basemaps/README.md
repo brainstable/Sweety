@@ -416,10 +416,11 @@ npm run build    # full ESM+UMD+CSS и light ESM+UMD
 npm run size     # бюджет размера
 ```
 
-Демо открывается через dev-сервер:
-`http://localhost:5173/packages/map-basemaps/demo/`. При открытии
-`demo/index.html` напрямую с диска показывается подсказка или происходит
-переход на запущенный Vite — пустой карты без объяснения не будет.
+Демо открывается через корневой dev-сервер:
+`http://localhost:5173/packages/map-basemaps/demo/`. Свой dev-сервер пакета
+(`cd packages/map-basemaps && npm run dev`) отдаёт то же демо по
+`http://localhost:<port>/demo/`. Если открыть `demo/index.html` с диска,
+страница покажет команду запуска — пустой карты без объяснения не будет.
 
 Пакет собирается с `peerDependencies: { "sweety-map": "^0.1.0" }`; ядро не
 бандлится. UMD-глобалы: `SweetyBasemaps` и `SweetyBasemapsLight`. CSS —
