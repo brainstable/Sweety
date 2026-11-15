@@ -3,10 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sweety — подложки</title>
+    <link rel="icon" href="data:," />
+    <title>Sweety — стили карты</title>
     <style>
-      :root {
-        color-scheme: light;
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: #e9eef4;
+      }
+      body {
         font-family:
           Inter,
           system-ui,
@@ -14,141 +20,10 @@
           'Segoe UI',
           sans-serif;
       }
-      * {
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-      }
-      body {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 340px;
-        background: #eef2f7;
-        color: #0f172a;
-      }
       #map {
-        height: 100vh;
-      }
-      aside {
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-        overflow: auto;
-        border-left: 1px solid #d8e0eb;
-        background: #fff;
-      }
-      .head {
-        padding: 18px 18px 12px;
-        border-bottom: 1px solid #e6ebf3;
-      }
-      .head h1 {
-        margin: 0 0 5px;
-        font-size: 17px;
-        letter-spacing: -0.01em;
-      }
-      .head p {
-        margin: 0;
-        color: #5b6778;
-        font-size: 12px;
-        line-height: 1.45;
-      }
-      section {
-        padding: 14px 18px;
-        border-bottom: 1px solid #eef2f7;
-      }
-      h2 {
-        margin: 0 0 8px;
-        color: #475569;
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
-      .row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      button {
-        height: 30px;
-        padding: 0 9px;
-        border: 1px solid #d7dfeb;
-        border-radius: 7px;
-        background: #fff;
-        color: #1f2937;
-        font: inherit;
-        font-size: 12px;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #f1f5f9;
-      }
-      button.primary {
-        border-color: #2f6fed;
-        background: #2f6fed;
-        color: #fff;
-      }
-      input {
         width: 100%;
-        height: 30px;
-        margin-top: 6px;
-        padding: 0 8px;
-        border: 1px solid #d7dfeb;
-        border-radius: 7px;
-        font: inherit;
-        font-size: 12px;
-      }
-      .hint {
-        margin: 6px 0 0;
-        color: #64748b;
-        font-size: 11px;
-        line-height: 1.4;
-      }
-      .active {
-        margin-top: 8px;
-        padding: 7px 9px;
-        border-radius: 7px;
-        background: #f8fafc;
-        color: #334155;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 11px;
-      }
-      #log {
-        flex: 1;
-        min-height: 120px;
-        overflow: auto;
-        padding: 8px 14px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 10px;
-        line-height: 1.5;
-        color: #334155;
-      }
-      .log-line {
-        padding: 2px 0;
-        border-bottom: 1px dashed #eef2f7;
-      }
-      .log-line b {
-        color: #2563eb;
-      }
-      #map2 {
-        height: 150px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #d7dfeb;
-      }
-      @media (max-width: 760px) {
-        body {
-          grid-template-columns: 1fr;
-          grid-template-rows: minmax(0, 1fr) 300px;
-        }
-        #map {
-          height: 100%;
-        }
-        aside {
-          border-left: 0;
-          border-top: 1px solid #d8e0eb;
-        }
+        height: 100vh;
+        height: 100dvh;
       }
     </style>
   </head>
@@ -237,209 +112,58 @@
         }, 8000);
       })();
     </script>
+
     <div id="map"></div>
-    <aside>
-      <div class="head">
-        <h1>Каталог подложек</h1>
-        <p>
-          Панель в правом верхнем углу карты открывает превью, поиск и категории. Смена подложки
-          сохраняется в localStorage.
-        </p>
-      </div>
-
-      <section>
-        <h2>A. Manager</h2>
-        <div class="row">
-          <button type="button" data-id="osm">OSM</button>
-          <button type="button" data-id="carto-dark">Carto Dark</button>
-          <button type="button" data-id="esri-world-imagery">Esri Imagery</button>
-          <button type="button" data-id="opentopomap">OpenTopoMap</button>
-        </div>
-        <p class="hint">`basemaps.install(map).set(id)`</p>
-        <div class="active" id="active">—</div>
-      </section>
-
-      <section>
-        <h2>Вариант и retina</h2>
-        <div class="row">
-          <button type="button" id="retina">Retina</button>
-          <button type="button" id="variant-dark">Carto Dark</button>
-          <button type="button" id="variant-sat">Esri</button>
-        </div>
-        <p class="hint">`setVariant('retina')` и `set(id, { variant })`</p>
-      </section>
-
-      <section>
-        <h2>Ключ Mapbox</h2>
-        <input id="key" type="password" placeholder="pk.…" autocomplete="off" />
-        <div class="row" style="margin-top: 6px">
-          <button type="button" class="primary" id="mapbox">Добавить Mapbox</button>
-        </div>
-        <p class="hint">Ключ хранится только в памяти. Без ключа будет basemaperror.</p>
-      </section>
-
-      <section>
-        <h2>B. Без manager</h2>
-        <div class="row">
-          <button type="button" id="create">createBasemap('carto-dark')</button>
-          <button type="button" id="remove-extra">Убрать</button>
-        </div>
-        <p class="hint">`createBasemap(id).addTo(map)`</p>
-      </section>
-
-      <section>
-        <h2>C. Control</h2>
-        <p class="hint" style="margin-top: 0">
-          Панель уже добавлена: `new BasemapControl({ preview: true })`.
-        </p>
-      </section>
-
-      <section>
-        <h2>D. Map options</h2>
-        <div id="map2"></div>
-        <p class="hint">`new Map('map2', { basemap: 'carto-dark' })` через init hook.</p>
-      </section>
-
-      <div id="log" aria-live="polite"></div>
-    </aside>
 
     <script type="module">
-      import { Map, TileLayer } from 'sweety-map';
-      import { BasemapControl, basemaps, createBasemap } from '../src/index.js';
+      import { Map } from 'sweety-map';
+      import { BasemapControl, basemaps } from '../src/index.js';
 
       const map = new Map('map', {
         center: [55.7558, 37.6173],
         zoom: 11,
-        zoomControl: true,
       });
 
-      // Сценарий A: одна строка установки.
+      // Одна строка — и у карты есть подложка с сохранением выбора.
       basemaps.install(map, {
         default: 'osm',
         persist: true,
+        storageKey: 'sweety-demo-basemap',
         fallback: 'osm',
-        maxTileErrors: 3,
       });
 
+      // Выбор стиля: короткий список бесплатных подложек с понятными названиями.
       new BasemapControl({
         position: 'topright',
         preview: true,
+        previewCoords: { x: 2476, y: 1280, z: 12 },
+        search: false,
+        showCategories: false,
         providers: [
           'osm',
-          'carto-dark',
-          'carto-positron',
+          'esri-light-gray',
+          'esri-dark-gray',
           'esri-world-imagery',
-          'opentopomap',
+          'esri-world-topo',
           'cyclosm',
-          'wikimedia',
-          'mapbox',
-          'maptiler',
-          'thunderforest',
-          'here',
-          'stadia',
-          'jawg',
-          'google',
-          'bing',
+          'osm-hot',
         ],
+        labels: {
+          osm: 'Улицы',
+          'esri-light-gray': 'Светлая',
+          'esri-dark-gray': 'Тёмная',
+          'esri-world-imagery': 'Спутник',
+          'esri-world-topo': 'Рельеф',
+          cyclosm: 'Велосипедная',
+          'osm-hot': 'Гуманитарная',
+        },
         i18n: {
-          title: 'Подложки',
-          search: 'Поиск подложек',
-          requiresKey: 'Нужен ключ',
-          enterKey: 'Введите ключ для {name}',
-          apply: 'Применить',
-          cancel: 'Отмена',
-          streets: 'Улицы',
-          satellite: 'Спутник',
-          terrain: 'Рельеф',
-          dark: 'Тёмные',
-          transport: 'Транспорт',
-          humanitarian: 'Гуманитарные',
+          title: 'Слои',
+          close: 'Закрыть',
         },
       }).addTo(map);
 
-      const logElement = document.getElementById('log');
-      const activeElement = document.getElementById('active');
-      const log = (type, details = '') => {
-        const line = document.createElement('div');
-        line.className = 'log-line';
-        line.innerHTML = `<b>${type}</b>${details ? ` · ${details}` : ''}`;
-        logElement.prepend(line);
-      };
-      const sync = () => {
-        const manager = map.basemaps;
-        const id = manager.get();
-        activeElement.textContent = id
-          ? `${id} · ${manager.getLayer()?.getBasemapVariant() || 'default'}`
-          : '—';
-      };
-
-      map.basemaps.on('basemapchange', (event) => {
-        log('basemapchange', `${event.previousId || 'null'} → ${event.id || 'null'}`);
-        sync();
-      });
-      map.basemaps.on('basemapready', (event) => log('basemapready', event.id));
-      map.basemaps.on('basemaperror', (event) =>
-        log('basemaperror', `${event.id} · ${event.code}`),
-      );
-
-      document.querySelectorAll('[data-id]').forEach((button) => {
-        button.addEventListener('click', () => {
-          map.basemaps.set(button.dataset.id);
-        });
-      });
-
-      document.getElementById('retina').addEventListener('click', () => {
-        map.basemaps.setVariant('retina');
-        log('setVariant', 'retina');
-      });
-      document.getElementById('variant-dark').addEventListener('click', () => {
-        map.basemaps.set('carto-dark', { force: true });
-      });
-      document.getElementById('variant-sat').addEventListener('click', () => {
-        map.basemaps.set('esri-world-imagery', { force: true });
-      });
-
-      const keyInput = document.getElementById('key');
-      document.getElementById('mapbox').addEventListener('click', () => {
-        try {
-          map.basemaps.set('mapbox', { key: keyInput.value.trim(), variant: 'satellite' });
-        } catch (error) {
-          log('error', error.message);
-        }
-      });
-
-      let extra = null;
-      document.getElementById('create').addEventListener('click', () => {
-        if (extra) return;
-        // Сценарий B: слой без менеджера.
-        extra = createBasemap('carto-dark', {}, { opacity: 0.55 }).addTo(map);
-        log('createBasemap', 'carto-dark overlay');
-      });
-      document.getElementById('remove-extra').addEventListener('click', () => {
-        extra?.remove();
-        extra = null;
-        log('remove', 'overlay');
-      });
-
-      // Сценарий D: конфиг карты, hook зарегистрирован импортом пакета.
-      const map2 = new Map('map2', {
-        center: [55.75, 37.61],
-        zoom: 9,
-        zoomControl: false,
-        attributionControl: false,
-        basemap: 'carto-dark',
-      });
-      new TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        subdomains: 'abc',
-        attribution: '© OpenStreetMap contributors',
-        opacity: 0.35,
-      }).addTo(map2);
-
       window.map = map;
-      window.map2 = map2;
-      window.basemaps = basemaps;
-      sync();
-      log('ready', 'basemaps installed');
       window.__sweetyDemoReady();
     </script>
   </body>

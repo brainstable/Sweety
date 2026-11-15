@@ -88,7 +88,7 @@ const map = new Map('map', {
 ```
 basemaps (singleton facade)
 │
-├── Provider registry         22 встроенных дескриптора + registerProvider
+├── Provider registry         24 встроенных дескриптора + registerProvider
 ├── BasemapsManager           один на карту: активный id, слои, ключи, persist
 │   ├── Resolver              ключи, {s}, {r}, {variant}, proxy, attribution
 │   ├── BasemapTileLayer      TileLayer + адаптер
@@ -111,7 +111,7 @@ basemaps (singleton facade)
 
 ## Провайдеры
 
-22 встроенных источника. `requiresKey` означает, что без ключа `set()` выбросит
+24 встроенных источника. `requiresKey` означает, что без ключа `set()` выбросит
 `BasemapKeyError`, а `basemaperror` отправит понятное сообщение.
 
 | id                   | Категория    | Ключ | Z    | Условия                                                    |
@@ -127,6 +127,8 @@ basemaps (singleton facade)
 | `carto-voyager`      | streets      | —    | 0–20 | CARTO / OSM                                                |
 | `esri-world-imagery` | satellite    | —    | 0–19 | Esri terms                                                 |
 | `esri-world-topo`    | terrain      | —    | 0–19 | Esri terms                                                 |
+| `esri-light-gray`    | streets      | —    | 0–16 | Esri terms                                                 |
+| `esri-dark-gray`     | dark         | —    | 0–16 | Esri terms                                                 |
 | `stamen-toner`       | dark         | —    | 0–20 | Stadia / Stamen                                            |
 | `mapbox`             | streets      | да   | 0–22 | [токен](https://account.mapbox.com/access-tokens/)         |
 | `maptiler`           | streets      | да   | 0–22 | [ключ](https://cloud.maptiler.com/account/keys/)           |
@@ -335,21 +337,27 @@ Retina включается автоматически при `devicePixelRatio 
 const control = new BasemapControl({
   position: 'topright',
   providers: ['osm', 'carto-dark', 'esri-world-imagery', 'mapbox'],
+  labels: { osm: 'Улицы', 'carto-dark': 'Тёмная' },
   preview: true,
+  previewCoords: { x: 38, y: 20, z: 6 },
   compact: false,
   search: true,
   showCategories: true,
   i18n: {
-    title: 'Подложки',
+    title: 'Слои',
     search: 'Поиск',
     requiresKey: 'Нужен ключ',
+    close: 'Закрыть',
   },
   theme: 'dark',
 });
 ```
 
 - Группировка по категориям, поиск по названию/id.
-- Превью загружаются лениво при открытии панели (`loading="lazy"`).
+- `labels` заменяет подписи провайдеров в списке и на кнопке, не меняя каталог.
+- `previewCoords` задаёт тайл-образец для превью (по умолчанию `{ x: 2, y: 1, z: 2 }`).
+- Превью загружаются лениво при открытии панели (`preview: true`); пока
+  картинка грузится или если она недоступна, видна цветная заглушка с буквой.
 - Активный провайдер подсвечен и отмечен.
 - Для `requiresKey` показывается форма ввода ключа; ключ остаётся в памяти.
 - `compact: true` — только кнопка.
@@ -364,8 +372,9 @@ CSS-переменные:
   --map-basemaps-bg: #fff;
   --map-basemaps-border: rgba(15, 23, 42, 0.14);
   --map-basemaps-active: #2f6fed;
-  --map-basemaps-radius: 10px;
-  --map-basemaps-thumb-size: 42px;
+  --map-basemaps-radius: 12px;
+  --map-basemaps-thumb-width: 64px;
+  --map-basemaps-thumb-height: 46px;
 }
 ```
 
@@ -417,7 +426,9 @@ npm run size     # бюджет размера
 ```
 
 Демо открывается через корневой dev-сервер:
-`http://localhost:5173/packages/map-basemaps/demo/`. Свой dev-сервер пакета
+`http://localhost:5173/packages/map-basemaps/demo/`. Это полноэкранная карта и
+одна кнопка выбора стиля: семь бесплатных подложек с превью и понятными
+подписями, выбор запоминается. Свой dev-сервер пакета
 (`cd packages/map-basemaps && npm run dev`) отдаёт то же демо по
 `http://localhost:<port>/demo/`. Если открыть `demo/index.html` с диска,
 страница покажет команду запуска — пустой карты без объяснения не будет.

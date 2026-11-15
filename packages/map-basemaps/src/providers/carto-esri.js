@@ -78,6 +78,36 @@ export const esriWorldTopo = {
   requiresKey: false,
 };
 
+export const esriLightGray = {
+  id: 'esri-light-gray',
+  name: 'Esri Light Gray Canvas',
+  category: 'streets',
+  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  subdomains: [],
+  minZoom: 0,
+  maxZoom: 16,
+  tileSize: 256,
+  attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors',
+  termsUrl: 'https://www.esri.com/en-us/legal/terms/full-master-agreement',
+  license: 'Esri Master Agreement',
+  requiresKey: false,
+};
+
+export const esriDarkGray = {
+  id: 'esri-dark-gray',
+  name: 'Esri Dark Gray Canvas',
+  category: 'dark',
+  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+  subdomains: [],
+  minZoom: 0,
+  maxZoom: 16,
+  tileSize: 256,
+  attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors',
+  termsUrl: 'https://www.esri.com/en-us/legal/terms/full-master-agreement',
+  license: 'Esri Master Agreement',
+  requiresKey: false,
+};
+
 export const stamenToner = {
   id: 'stamen-toner',
   name: 'Stamen Toner',

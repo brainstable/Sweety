@@ -12,6 +12,7 @@ const DEFAULT_I18N = {
   apply: 'Apply',
   cancel: 'Cancel',
   terms: 'Terms',
+  close: 'Close',
   streets: 'Streets',
   satellite: 'Satellite',
   terrain: 'Terrain',
@@ -37,6 +38,8 @@ const ICONS = {
   key: '<circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5L19 4M15 4h4v4"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   check: '<path d="M5 12l4.5 4.5L19 7"/>',
+  chevron: '<path d="M6 9l6 6 6-6"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
 };
 
 /**
@@ -51,6 +54,8 @@ export class BasemapControl extends Control {
    * @param {boolean} [options.preview=false]
    * @param {boolean} [options.compact=false]
    * @param {boolean} [options.search=true]
+   * @param {object} [options.labels] подписи провайдеров: `{ osm: 'Улицы' }`
+   * @param {object} [options.previewCoords] тайл для превью: `{ x, y, z }`
    * @param {object} [options.i18n]
    * @param {any} [options.manager] явный менеджер
    */
@@ -63,6 +68,8 @@ export class BasemapControl extends Control {
       search: true,
       showCategories: true,
       theme: null,
+      labels: {},
+      previewCoords: { x: 2, y: 1, z: 2 },
       i18n: {},
       className: '',
       ...options,
@@ -108,6 +115,10 @@ export class BasemapControl extends Control {
     this._toggleLabel.className = 'map-basemaps-toggle-label';
     this._toggleLabel.textContent = this._t('title');
     this._toggleButton.appendChild(this._toggleLabel);
+    this._toggleButton.insertAdjacentHTML(
+      'beforeend',
+      `<svg class="map-basemaps-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS.chevron}</svg>`,
+    );
     this._toggleButton.addEventListener('click', this._onToggle);
     container.appendChild(this._toggleButton);
 
@@ -116,7 +127,6 @@ export class BasemapControl extends Control {
     this._panel.hidden = true;
     this._panel.setAttribute('role', 'dialog');
     this._panel.setAttribute('aria-label', this._t('title'));
-    if (this.options.preview) this._panel.classList.add('map-basemaps-panel-preview');
     container.appendChild(this._panel);
 
     this._buildPanel();
@@ -183,7 +193,9 @@ export class BasemapControl extends Control {
     const active = this._manager.get();
     const activeProvider = active ? this._manager.list({ ids: [active] })[0] : null;
     if (this._toggleLabel) {
-      this._toggleLabel.textContent = activeProvider?.name || this._t('title');
+      this._toggleLabel.textContent = activeProvider
+        ? this._labelFor(activeProvider)
+        : this._t('title');
     }
     for (const [id, button] of this._items) {
       const isActive = id === active;
@@ -209,9 +221,33 @@ export class BasemapControl extends Control {
     this._panel.textContent = '';
     this._panel.addEventListener('click', this._onPanelClick);
 
+    const head = document.createElement('div');
+    head.className = 'map-basemaps-head';
+    const title = document.createElement('div');
+    title.className = 'map-basemaps-title';
+    title.textContent = this._t('title');
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'map-basemaps-close';
+    close.setAttribute('aria-label', this._t('close'));
+    close.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS.close}</svg>`;
+    close.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.close();
+      this._toggleButton?.focus();
+    });
+    head.appendChild(title);
+    head.appendChild(close);
+    this._panel.appendChild(head);
+
     if (this.options.search) {
       const search = document.createElement('div');
       search.className = 'map-basemaps-search';
+      search.insertAdjacentHTML(
+        'afterbegin',
+        `<svg class="map-basemaps-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS.search}</svg>`,
+      );
       this._searchInput = document.createElement('input');
       this._searchInput.type = 'search';
       this._searchInput.className = 'map-basemaps-search-input';
@@ -224,6 +260,7 @@ export class BasemapControl extends Control {
 
     const list = document.createElement('div');
     list.className = 'map-basemaps-list';
+    if (!this.options.showCategories) list.classList.add('map-basemaps-list-flat');
     list.setAttribute('role', 'listbox');
     list.setAttribute('aria-label', this._t('title'));
     this._list = list;
@@ -278,13 +315,17 @@ export class BasemapControl extends Control {
     button.dataset.id = provider.id;
     button.setAttribute('role', 'option');
     button.setAttribute('aria-selected', 'false');
-    button.dataset.search = `${provider.name} ${provider.id} ${provider.category}`.toLowerCase();
+    const displayName = this._labelFor(provider);
+    button.title = `${provider.name} · z${provider.minZoom}–${provider.maxZoom}`;
+    button.dataset.search =
+      `${displayName} ${provider.name} ${provider.id} ${provider.category}`.toLowerCase();
 
     const thumb = document.createElement('span');
     thumb.className = 'map-basemaps-thumb';
     thumb.dataset.preview = provider.id;
+    thumb.dataset.category = provider.category || 'custom';
     if (!provider.requiresKey) thumb.dataset.previewPending = 'true';
-    thumb.textContent = provider.requiresKey ? '' : provider.name.slice(0, 1);
+    thumb.textContent = provider.requiresKey ? '' : displayName.slice(0, 1);
     if (provider.requiresKey) {
       thumb.classList.add('map-basemaps-thumb-key');
       thumb.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS.key}</svg>`;
@@ -295,22 +336,15 @@ export class BasemapControl extends Control {
     text.className = 'map-basemaps-item-text';
     const name = document.createElement('span');
     name.className = 'map-basemaps-item-name';
-    name.textContent = provider.name;
+    name.textContent = displayName;
     text.appendChild(name);
-    const meta = document.createElement('span');
-    meta.className = 'map-basemaps-item-meta';
-    meta.textContent = provider.requiresKey
-      ? `${this._t('requiresKey')} · z${provider.minZoom}–${provider.maxZoom}`
-      : `z${provider.minZoom}–${provider.maxZoom}`;
-    text.appendChild(meta);
-    button.appendChild(text);
-
     if (provider.requiresKey) {
-      const badge = document.createElement('span');
-      badge.className = 'map-basemaps-badge';
-      badge.textContent = 'KEY';
-      button.appendChild(badge);
+      const meta = document.createElement('span');
+      meta.className = 'map-basemaps-item-meta';
+      meta.textContent = this._t('requiresKey');
+      text.appendChild(meta);
     }
+    button.appendChild(text);
 
     this._items.set(provider.id, button);
     return button;
@@ -475,7 +509,14 @@ export class BasemapControl extends Control {
   }
 
   /** @private */
+  _labelFor(provider) {
+    const labels = this.options.labels || {};
+    return labels[provider.id] || provider.name;
+  }
+
+  /** @private */
   _loadPreviews() {
+    if (!this.options.preview) return;
     const manager = this._manager;
     for (const [id, button] of this._items) {
       const thumb = button.querySelector('.map-basemaps-thumb');
@@ -493,16 +534,21 @@ export class BasemapControl extends Control {
         ) {
           continue;
         }
+        const preview = this.options.previewCoords || { x: 2, y: 1, z: 2 };
         const url = provider.preview
           ? provider.preview
-          : manager.resolveUrl(id, { coords: { x: 2, y: 1, z: 2 }, subdomain: 'a' });
+          : manager.resolveUrl(id, {
+              coords: { x: preview.x, y: preview.y, z: preview.z },
+              subdomain: 'a',
+            });
         const image = document.createElement('img');
         image.loading = 'lazy';
         image.alt = '';
+        image.draggable = false;
         image.decoding = 'async';
         image.src = url;
+        // При ошибке картинка убирается — остаётся цветная заглушка с буквой.
         image.addEventListener('error', () => image.remove(), { once: true });
-        thumb.textContent = '';
         thumb.appendChild(image);
       } catch {
         // Без превью остаётся буква-заглушка.

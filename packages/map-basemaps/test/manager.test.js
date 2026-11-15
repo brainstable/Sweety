@@ -233,19 +233,32 @@ describe('Сценарии A–D', () => {
     const control = new BasemapControl({
       providers: ['osm', 'carto-dark'],
       preview: true,
+      previewCoords: { x: 1, y: 1, z: 1 },
+      labels: { osm: 'Улицы', 'carto-dark': 'Тёмная' },
+      i18n: { title: 'Слои', close: 'Закрыть' },
     }).addTo(map);
     expect(container.querySelectorAll('.map-basemaps-item')).toHaveLength(2);
+    expect(container.querySelector('.map-basemaps-title').textContent).toBe('Слои');
+    expect(container.querySelector('[data-id="osm"] .map-basemaps-item-name').textContent).toBe(
+      'Улицы',
+    );
     control.open();
     expect(container.querySelector('.map-basemaps-panel').hidden).toBe(false);
-    expect(container.querySelector('.map-basemaps-thumb img')).toBeTruthy();
+    expect(container.querySelector('.map-basemaps-thumb img').getAttribute('src')).toContain(
+      '/1/1/1.png',
+    );
+    container.querySelector('.map-basemaps-close').click();
+    expect(container.querySelector('.map-basemaps-panel').hidden).toBe(true);
+    control.open();
     const search = container.querySelector('.map-basemaps-search-input');
-    search.value = 'carto';
+    search.value = 'тёмн';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(container.querySelector('[data-id="osm"]').hidden).toBe(true);
     expect(container.querySelector('[data-id="carto-dark"]').hidden).toBe(false);
     const item = container.querySelector('[data-id="carto-dark"]');
     item.click();
     expect(map.basemaps.get()).toBe('carto-dark');
+    expect(container.querySelector('.map-basemaps-toggle-label').textContent).toBe('Тёмная');
     control.remove();
     map.basemaps.destroy();
     map.remove();
