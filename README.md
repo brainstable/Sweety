@@ -442,6 +442,9 @@ docs/          архитектура, API, Git-процесс
   рисование геометрии: вершины, midpoint-вставка, undo/redo, GeoJSON-группы,
   snap, панель инструментов и CSS-темы. Подключается отдельным пакетом
   `sweety-map-edit-plugin` без изменений ядра.
+- [map-basemaps](packages/map-basemaps/README.md) — каталог из 22 подложек,
+  менеджер переключения, ключи, retina, адаптеры XYZ/WMS/WMTS, fallback и
+  контрол с превью. Пакет `sweety-map-basemaps`.
 
 ## Документация
 
