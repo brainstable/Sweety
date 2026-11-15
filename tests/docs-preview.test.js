@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { renderMarkdown } from '../scripts/docs-preview.mjs';
+import { createDocsMiddleware, renderMarkdown } from '../scripts/docs-preview.mjs';
+
+function runMiddleware(url) {
+  const middleware = createDocsMiddleware({ root: process.cwd(), version: '0.1.0' });
+  return new Promise((resolve, reject) => {
+    const headers = {};
+    const response = {
+      statusCode: 0,
+      setHeader(name, value) {
+        headers[name.toLowerCase()] = value;
+      },
+      end(body) {
+        resolve({ status: this.statusCode, headers, body });
+      },
+    };
+    middleware({ method: 'GET', url }, response, (error) =>
+      error ? reject(error) : resolve({ status: 404, headers, body: '', next: true }),
+    );
+  });
+}
 
 describe('docs preview', () => {
   it('renders русский текст, заголовки и inline-разметку', () => {
@@ -47,5 +66,26 @@ describe('docs preview', () => {
 
     expect(html).toContain('href="#"');
     expect(html).not.toContain('javascript:');
+  });
+
+  it('отдаёт README пакета как HTML с UTF-8, а не сырой markdown', async () => {
+    const result = await runMiddleware('/packages/map-edit-plugin/README.md');
+    expect(result.status).toBe(200);
+    expect(result.headers['content-type']).toBe('text/html; charset=utf-8');
+    expect(result.body).toContain('Sweety map-edit-plugin');
+    expect(result.body).toContain('Редактирование');
+    expect(result.body).not.toContain('РџСЂ');
+  });
+
+  it('сохраняет специальные страницы документации', async () => {
+    const result = await runMiddleware('/docs/API.md');
+    expect(result.status).toBe(200);
+    expect(result.headers['content-type']).toBe('text/html; charset=utf-8');
+    expect(result.body).toContain('<article class="markdown">');
+  });
+
+  it('не перехватывает несуществующий markdown', async () => {
+    const result = await runMiddleware('/packages/map-edit-plugin/missing.md');
+    expect(result.next).toBe(true);
   });
 });
