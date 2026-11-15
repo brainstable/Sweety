@@ -3,9 +3,9 @@ import { create, getMousePosition, off, on, preventDefault } from '../../util/do
 import { cancelAnimFrame, devicePixelRatio, requestAnimFrame } from '../../util/index.js';
 
 /**
- * Canvas renderer for large numbers of vector features. All paths share one
- * canvas; redraws are coalesced into a single animation frame and hit testing
- * is performed against the projected geometry.
+ * Рендерер Canvas для большого числа векторных объектов. Все path используют один
+ * canvas; перерисовки объединяются в один кадр анимации, а проверка попадания
+ * выполняется по спроецированной геометрии.
  */
 export class Canvas extends Renderer {
   constructor(options = {}) {
@@ -92,7 +92,7 @@ export class Canvas extends Renderer {
     });
   }
 
-  /** Clear and repaint every path. @private */
+  /** Очищает и перерисовывает все path. @private */
   _redraw() {
     if (!this._ctx || !this._canvas) return;
     const ratio = devicePixelRatio();
@@ -147,7 +147,7 @@ export class Canvas extends Renderer {
     }
     ctx.restore();
 
-    // Keep the canvas bounded to the viewport even if a path is huge.
+    // Ограничиваем canvas размерами вьюпорта, даже если path очень велик.
     if (size.x === 0 || size.y === 0) return;
   }
 
@@ -186,7 +186,7 @@ export class Canvas extends Renderer {
   }
 
   /**
-   * Find the topmost interactive path under a container point.
+   * Находит самый верхний интерактивный path под точкой контейнера.
    * @param {{x:number,y:number}} point
    * @returns {import('./Path.js').Path|null}
    */

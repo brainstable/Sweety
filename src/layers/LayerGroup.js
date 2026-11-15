@@ -2,10 +2,10 @@ import { Layer } from './Layer.js';
 import { stamp } from '../util/index.js';
 
 /**
- * A collection of layers that behaves as one logical layer.
+ * Коллекция слоёв, которая ведёт себя как один логический слой.
  *
- * Children are registered with the map so they render and update independently,
- * while events are also propagated through the group.
+ * Дочерние слои регистрируются на карте и отрисовываются/обновляются
+ * независимо, при этом события также распространяются через группу.
  */
 export class LayerGroup extends Layer {
   /**
@@ -33,7 +33,7 @@ export class LayerGroup extends Layer {
   }
 
   /**
-   * Add a child layer.
+   * Добавляет дочерний слой.
    * @param {Layer} layer
    * @returns {this}
    */
@@ -49,7 +49,7 @@ export class LayerGroup extends Layer {
   }
 
   /**
-   * Remove a child layer.
+   * Удаляет дочерний слой.
    * @param {Layer} layer
    * @returns {this}
    */
@@ -65,7 +65,7 @@ export class LayerGroup extends Layer {
   }
 
   /**
-   * Remove every child layer.
+   * Удаляет все дочерние слои.
    * @returns {this}
    */
   clearLayers() {
@@ -79,7 +79,7 @@ export class LayerGroup extends Layer {
   }
 
   /**
-   * Iterate child layers.
+   * Перебирает дочерние слои.
    * @param {Function} callback
    * @param {object} [context]
    * @returns {this}
@@ -95,7 +95,7 @@ export class LayerGroup extends Layer {
   }
 
   /**
-   * Call a method on every child layer.
+   * Вызывает метод у каждого дочернего слоя.
    * @param {string} method
    * @param {...*} args
    * @returns {this}
@@ -108,7 +108,7 @@ export class LayerGroup extends Layer {
   }
 
   /**
-   * Assign a z-index to every child layer.
+   * Назначает z-index каждому дочернему слою.
    * @param {number} zIndex
    * @returns {this}
    */
@@ -135,8 +135,8 @@ export class LayerGroup extends Layer {
 }
 
 /**
- * LayerGroup with shared popup/tooltip/style behaviour. FeatureGroup is what
- * GeoJSONLayer uses so all generated features can be styled as a unit.
+ * LayerGroup с общим поведением всплывающих окон, подсказок и стилей. Именно
+ * FeatureGroup использует GeoJSONLayer для единой стилизации всех объектов.
  */
 export class FeatureGroup extends LayerGroup {
   /** @param {Layer} layer */
@@ -152,7 +152,7 @@ export class FeatureGroup extends LayerGroup {
   }
 
   /**
-   * Bind the same popup to every child.
+   * Привязывает одинаковое всплывающее окно каждому дочернему слою.
    * @param {string|HTMLElement|Function} content
    * @param {object} [options]
    * @returns {this}
@@ -185,7 +185,7 @@ export class FeatureGroup extends LayerGroup {
   }
 
   /**
-   * Bind the same tooltip to every child.
+   * Привязывает одинаковую всплывающую подсказку каждому дочернему слою.
    * @param {string|HTMLElement|Function} content
    * @param {object} [options]
    * @returns {this}
@@ -218,7 +218,7 @@ export class FeatureGroup extends LayerGroup {
   }
 
   /**
-   * Apply a path style to every vector child.
+   * Применяет стиль пути ко всем дочерним векторным слоям.
    * @param {object} style
    * @returns {this}
    */

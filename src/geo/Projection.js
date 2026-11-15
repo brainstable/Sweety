@@ -2,19 +2,20 @@ import { LatLng } from '../core/LatLng.js';
 import { Point } from '../core/Point.js';
 import { toRad, toDeg } from '../util/index.js';
 
-/** Earth radius used by EPSG:3857 in metres. */
+/** Радиус Земли, используемый в EPSG:3857, в метрах. */
 export const MERCATOR_RADIUS = 6378137;
 
-/** Latitude limit where Web Mercator becomes square. */
+/** Предельная широта, при которой Web Mercator становится квадратным. */
 export const MERCATOR_MAX_LATITUDE =
   (2 * Math.atan(Math.exp(Math.PI)) - Math.PI / 2) * (180 / Math.PI);
 
 /**
- * Projection interface. A projection converts geographic coordinates
- * (degrees) to a planar coordinate system (usually metres) and back.
+ * Интерфейс проекции. Проекция переводит географические координаты
+ * (в градусах) в плоскую систему координат (обычно в метры) и обратно.
  *
- * Custom projections can extend this class and override {@link project} and
- * {@link unproject}; {@link bounds} should describe the valid planar extent.
+ * Пользовательские проекции могут наследовать этот класс и переопределять
+ * {@link project} и {@link unproject}; {@link bounds} должен описывать
+ * допустимый плоский экстент.
  */
 export class Projection {
   /**
@@ -22,7 +23,7 @@ export class Projection {
    * @param {string} definition.code
    * @param {(latlng: LatLng) => Point} definition.project
    * @param {(point: Point) => LatLng} definition.unproject
-   * @param {[[number, number], [number, number]]} definition.bounds `[lat, lng]` corners
+   * @param {[[number, number], [number, number]]} definition.bounds углы `[lat, lng]`
    */
   constructor({ code, project, unproject, bounds }) {
     /** @type {string} */
@@ -34,7 +35,7 @@ export class Projection {
   }
 
   /**
-   * Project a geographic coordinate into metres.
+   * Проецирует географическую координату в метры.
    * @param {LatLng|number[]|{lat:number,lng:number}} latlng
    * @returns {Point}
    */
@@ -43,7 +44,7 @@ export class Projection {
   }
 
   /**
-   * Convert a projected point back to geographic coordinates.
+   * Переводит спроецированную точку обратно в географические координаты.
    * @param {Point|{x:number,y:number}|number[]} point
    * @returns {LatLng}
    */
@@ -53,8 +54,9 @@ export class Projection {
 }
 
 /**
- * Spherical Mercator (EPSG:3857). Latitude is clamped to the standard
- * ±85.0511287798° limit, which keeps the world square and finite at the poles.
+ * Сферическая проекция Меркатора (EPSG:3857). Широта ограничивается
+ * стандартным пределом ±85.0511287798°, поэтому мир остаётся квадратным
+ * и конечным на полюсах.
  */
 export const EPSG3857_PROJECTION = new Projection({
   code: 'EPSG:3857',
@@ -77,8 +79,8 @@ export const EPSG3857_PROJECTION = new Projection({
 });
 
 /**
- * Equirectangular / geographic projection (EPSG:4326).
- * Coordinates are kept in degrees and therefore map linearly to the plane.
+ * Равнопромежуточная (географическая) проекция (EPSG:4326).
+ * Координаты остаются в градусах и поэтому линейно отображаются на плоскость.
  */
 export const EPSG4326_PROJECTION = new Projection({
   code: 'EPSG:4326',
@@ -94,14 +96,15 @@ export const EPSG4326_PROJECTION = new Projection({
   },
 });
 
-/** Clamp a latitude into the Web Mercator domain. */
+/** Ограничивает широту областью допустимых значений Web Mercator. */
 export function clampMercatorLatitude(latitude) {
   return Math.max(-MERCATOR_MAX_LATITUDE, Math.min(MERCATOR_MAX_LATITUDE, latitude));
 }
 
 /**
- * Convert degrees to metres at a given latitude using the spherical Mercator
- * scale factor. Useful for scale bars and hit tolerance calculations.
+ * Переводит градусы в метры на заданной широте с использованием масштабного
+ * коэффициента сферического Меркатора. Полезно для масштабных линеек и
+ * расчёта допусков попадания.
  */
 export function metersPerDegree(latitude) {
   return (Math.PI / 180) * MERCATOR_RADIUS * Math.cos(toRad(latitude));

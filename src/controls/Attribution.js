@@ -1,8 +1,8 @@
 import { Control } from './Control.js';
 
 /**
- * Attribution control. It rebuilds its text from layer attributions whenever
- * a layer is added or removed, de-duplicating repeated credits.
+ * Контрол атрибуции. Он заново собирает текст из атрибуций слоёв при каждом
+ * добавлении или удалении слоя, удаляя повторяющиеся упоминания.
  */
 export class AttributionControl extends Control {
   /** @param {object} [options] */
@@ -33,7 +33,7 @@ export class AttributionControl extends Control {
   }
 
   /**
-   * Add a persistent attribution string.
+   * Добавляет постоянную строку атрибуции.
    * @param {string} text
    * @returns {this}
    */
@@ -44,7 +44,7 @@ export class AttributionControl extends Control {
   }
 
   /**
-   * Remove a persistent attribution string.
+   * Удаляет постоянную строку атрибуции.
    * @param {string} text
    * @returns {this}
    */
@@ -55,7 +55,7 @@ export class AttributionControl extends Control {
   }
 
   /**
-   * Change the prefix HTML.
+   * Изменяет HTML-префикс.
    * @param {string} prefix
    * @returns {this}
    */

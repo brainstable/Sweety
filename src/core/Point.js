@@ -1,6 +1,6 @@
 /**
- * A point in pixel space. The class is deliberately mutable, matching the
- * ergonomics of canvas and DOM positioning code.
+ * Точка в пиксельном пространстве. Класс намеренно изменяемый, что соответствует
+ * стилю кода позиционирования Canvas и DOM.
  */
 export class Point {
   /**
@@ -106,7 +106,7 @@ export class Point {
     return this;
   }
 
-  /** Euclidean distance to another point. */
+  /** Евклидово расстояние до другой точки. */
   distanceTo(other) {
     const point = other instanceof Point ? other : new Point(other);
     const dx = point.x - this.x;
@@ -114,13 +114,13 @@ export class Point {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  /** Inclusive bounds check. */
+  /** Проверка попадания в границы включительно. */
   contains(other) {
     const point = other instanceof Point ? other : new Point(other);
     return this.x <= point.x && point.x <= this.x && this.y <= point.y && point.y <= this.y;
   }
 
-  /** Exact component comparison. */
+  /** Точное сравнение компонентов. */
   equals(other) {
     if (!other) return false;
     const point = other instanceof Point ? other : new Point(other);
@@ -134,7 +134,7 @@ export class Point {
 }
 
 /**
- * Factory preserving an existing Point instance.
+ * Фабрика, сохраняющая существующий экземпляр Point.
  * @returns {Point}
  */
 export function toPoint(x, y) {

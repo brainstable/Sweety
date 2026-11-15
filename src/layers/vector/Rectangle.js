@@ -4,7 +4,7 @@ import { LatLng } from '../../core/LatLng.js';
 import { extend } from '../../util/index.js';
 
 /**
- * A bounding-box rectangle rendered as a closed path.
+ * Прямоугольник по ограничивающему боксу, отрисовываемый как замкнутый path.
  */
 export class Rectangle extends Path {
   /**

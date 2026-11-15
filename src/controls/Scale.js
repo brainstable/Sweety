@@ -2,7 +2,7 @@ import { Control } from './Control.js';
 import { create, empty } from '../util/dom.js';
 
 /**
- * Scale bar showing a rounded metric and/or imperial distance.
+ * Линейка масштаба с округлённым расстоянием в метрической и/или имперской системе.
  */
 export class ScaleControl extends Control {
   /** @param {object} [options] */

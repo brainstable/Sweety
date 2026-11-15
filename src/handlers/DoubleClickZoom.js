@@ -1,7 +1,7 @@
 import { Handler } from '../core/Handler.js';
 import { getMousePosition, off, on, preventDefault } from '../util/dom.js';
 
-/** Double-click zoom, anchored at the cursor. */
+/** Масштабирование двойным щелчком с привязкой к курсору. */
 export class DoubleClickZoom extends Handler {
   /** @private */
   _enable() {

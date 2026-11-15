@@ -4,8 +4,9 @@ import { getMousePosition, off, on, preventDefault } from '../util/dom.js';
 import { clamp } from '../util/index.js';
 
 /**
- * Two-finger pinch zoom. Pointer positions are tracked in a private registry
- * so the gesture survives pointers leaving the container.
+ * Масштабирование жестом «щипок» двумя пальцами. Позиции указателей хранятся
+ * в собственном реестре, чтобы жест продолжался при выходе указателей за
+ * пределы контейнера.
  */
 export class TouchZoom extends Handler {
   constructor(map) {
@@ -57,7 +58,7 @@ export class TouchZoom extends Handler {
     this._startLatLng = this._map.containerPointToLatLng(this._startPoint);
     this._map._moveStart(true);
 
-    // A one-finger drag may already be in flight; terminate it cleanly.
+    // Перетаскивание одним пальцем могло уже начаться; корректно завершаем его.
     if (this._map.dragging && this._map.dragging._dragging) {
       this._map.dragging._finishDrag(event);
       this._map._moveEnd(false);
@@ -88,8 +89,8 @@ export class TouchZoom extends Handler {
     const scale = distance / this._startDistance;
     const targetZoom = this._map._limitZoom(this._startZoom + Math.log2(scale));
 
-    // Keep the geographic point under the initial pinch midpoint anchored under
-    // the current midpoint as the fingers move.
+    // Удерживаем географическую точку под начальной серединой щипка привязанной
+    // к текущей середине при движении пальцев.
     if (targetZoom !== this._map.getZoom() || !midpoint.equals(this._startPoint)) {
       const world = this._map
         .project(this._startLatLng, targetZoom)

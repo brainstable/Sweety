@@ -3,9 +3,9 @@ import { Point } from '../core/Point.js';
 import { EPSG3857_PROJECTION, EPSG4326_PROJECTION, MERCATOR_RADIUS } from './Projection.js';
 
 /**
- * Affine transformation used to turn projected coordinates into pixel
- * coordinates. Translation is expressed in units of the scaled coordinate
- * system, matching the Leaflet-style `(a, b, c, d)` definition.
+ * Аффинное преобразование, переводящее спроецированные координаты в пиксельные.
+ * Сдвиг задаётся в единицах масштабированной системы координат и соответствует
+ * определению `(a, b, c, d)` в стиле Leaflet.
  */
 export class Transformation {
   /**
@@ -22,7 +22,7 @@ export class Transformation {
   }
 
   /**
-   * Apply the transformation after multiplying by `scale`.
+   * Применяет преобразование после умножения на `scale`.
    * @param {Point} point
    * @param {number} scale
    * @returns {Point}
@@ -32,7 +32,7 @@ export class Transformation {
   }
 
   /**
-   * Inverse transform.
+   * Обратное преобразование.
    * @param {Point} point
    * @param {number} scale
    * @returns {Point}
@@ -43,11 +43,11 @@ export class Transformation {
 }
 
 /**
- * Coordinate reference system. A CRS combines a projection, an affine
- * transformation and a zoom-to-scale function.
+ * Система координат (CRS). Объединяет проекцию, аффинное преобразование
+ * и функцию перевода зума в масштаб.
  *
- * Map code only depends on this interface, so custom CRS instances can be
- * passed through the `crs` map option.
+ * Код карты зависит только от этого интерфейса, поэтому пользовательские
+ * экземпляры CRS можно передавать через опцию карты `crs`.
  */
 export class CRS {
   /**
@@ -68,7 +68,7 @@ export class CRS {
   }
 
   /**
-   * Pixel scale at a (possibly fractional) zoom.
+   * Масштаб пикселей для зума (возможно, дробного).
    * @param {number} zoom
    * @returns {number}
    */
@@ -78,7 +78,7 @@ export class CRS {
   }
 
   /**
-   * Project geographic coordinates to metres.
+   * Проецирует географические координаты в метры.
    * @param {LatLng|number[]} latlng
    * @returns {Point}
    */
@@ -87,7 +87,7 @@ export class CRS {
   }
 
   /**
-   * Unproject metres to geographic coordinates.
+   * Переводит метры обратно в географические координаты.
    * @param {Point|{x:number,y:number}} point
    * @returns {LatLng}
    */
@@ -96,7 +96,7 @@ export class CRS {
   }
 
   /**
-   * Convert a coordinate to world pixels at `zoom`.
+   * Переводит координату в мировые пиксели на зуме `zoom`.
    * @param {LatLng|number[]} latlng
    * @param {number} zoom
    * @returns {Point}
@@ -107,7 +107,7 @@ export class CRS {
   }
 
   /**
-   * Convert world pixels at `zoom` to a coordinate.
+   * Переводит мировые пиксели на зуме `zoom` в координату.
    * @param {Point|{x:number,y:number}} point
    * @param {number} zoom
    * @returns {LatLng}
@@ -121,7 +121,7 @@ export class CRS {
   }
 
   /**
-   * The projected world extent in metres.
+   * Спроецированные границы мира в метрах.
    * @returns {{min: Point, max: Point}}
    */
   projectedBounds() {
@@ -133,7 +133,7 @@ export class CRS {
   }
 }
 
-/** Web Mercator CRS used by OpenStreetMap and most XYZ tile services. */
+/** CRS Web Mercator, используемая OpenStreetMap и большинством сервисов XYZ-тайлов. */
 export const EPSG3857 = new CRS({
   code: 'EPSG:3857',
   projection: EPSG3857_PROJECTION,
@@ -145,14 +145,14 @@ export const EPSG3857 = new CRS({
   ),
 });
 
-/** Geographic CRS with a linear degree-to-pixel mapping. */
+/** Географическая CRS с линейным отображением градусов в пиксели. */
 export const EPSG4326 = new CRS({
   code: 'EPSG:4326',
   projection: EPSG4326_PROJECTION,
   transformation: new Transformation(1 / 360, 0.5, -1 / 180, 0.5),
 });
 
-/** Lookup table for common EPSG identifiers. */
+/** Таблица поиска по распространённым идентификаторам EPSG. */
 export const CRS_BY_CODE = {
   'EPSG:3857': EPSG3857,
   'EPSG:900913': EPSG3857,
@@ -160,7 +160,7 @@ export const CRS_BY_CODE = {
 };
 
 /**
- * Resolve a CRS from an instance, code, or fall back to Web Mercator.
+ * Определяет CRS по экземпляру или коду, иначе возвращает Web Mercator.
  * @param {CRS|string|undefined} crs
  * @returns {CRS}
  */

@@ -23,9 +23,9 @@ const DEFAULT_OPTIONS = {
 };
 
 /**
- * Shared implementation for popups and tooltips. Overlays are not layers in
- * the tile/vector sense; they are lightweight event emitters that own a pane
- * node and follow a geographic anchor.
+ * Общая реализация для всплывающих окон и подсказок. Оверлеи — не слои в смысле
+ * тайлов и векторов, а легковесные эмиттеры событий, которым принадлежит узел
+ * панели; они следуют за географическим якорем.
  */
 export class DivOverlay extends Evented {
   /** @param {object} [options] */
@@ -55,7 +55,7 @@ export class DivOverlay extends Evented {
   }
 
   /**
-   * Set HTML, a DOM node, or a function returning either.
+   * Задаёт HTML, DOM-узел или функцию, возвращающую то или другое.
    * @param {string|HTMLElement|Function} content
    * @returns {this}
    */
@@ -71,7 +71,7 @@ export class DivOverlay extends Evented {
   }
 
   /**
-   * Set the geographic anchor.
+   * Задаёт географическую привязку.
    * @param {LatLng|number[]} latlng
    * @returns {this}
    */
@@ -92,7 +92,7 @@ export class DivOverlay extends Evented {
   }
 
   /**
-   * Open the overlay on a map.
+   * Открывает оверлей на карте.
    * @param {import('../core/Map.js').Map} map
    * @returns {this}
    */
@@ -135,7 +135,7 @@ export class DivOverlay extends Evented {
   }
 
   /**
-   * Open on a map, alias for {@link openOn}.
+   * Открывает на карте; псевдоним для {@link openOn}.
    * @param {import('../core/Map.js').Map} map
    * @returns {this}
    */
@@ -143,7 +143,7 @@ export class DivOverlay extends Evented {
     return this.openOn(map);
   }
 
-  /** Close the overlay. @returns {this} */
+  /** Закрывает оверлей. @returns {this} */
   close() {
     if (!this._open) return this;
     const map = this._map;
@@ -167,12 +167,12 @@ export class DivOverlay extends Evented {
     return this;
   }
 
-  /** Remove from the map. @returns {this} */
+  /** Удаляет с карты. @returns {this} */
   remove() {
     return this.close();
   }
 
-  /** Toggle open state. @returns {this} */
+  /** Переключает состояние открытия. @returns {this} */
   toggle() {
     if (this._open) return this.close();
     const map = this._map || this._lastMap;
@@ -184,7 +184,7 @@ export class DivOverlay extends Evented {
     return this._open;
   }
 
-  /** Re-render content and position. @returns {this} */
+  /** Перерисовывает содержимое и положение. @returns {this} */
   update() {
     if (!this._open) return this;
     this._renderContent();
@@ -292,7 +292,7 @@ export class DivOverlay extends Evented {
   }
 }
 
-/** Empty anchor helper used by subclasses when a source has no coordinates. */
+/** Вспомогательная резервная привязка для подклассов, когда у источника нет координат. */
 export function fallbackLatLng(source, map) {
   if (source) {
     if (typeof source.getLatLng === 'function') return source.getLatLng();

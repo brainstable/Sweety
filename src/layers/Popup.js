@@ -12,7 +12,7 @@ const POPUP_DEFAULTS = {
 };
 
 /**
- * HTML popup anchored to a geographic point.
+ * HTML-всплывающее окно, привязанное к географической точке.
  *
  * @example
  * marker.bindPopup('<strong>Hello</strong>');

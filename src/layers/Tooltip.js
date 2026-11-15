@@ -15,8 +15,8 @@ const TOOLTIP_DEFAULTS = {
 };
 
 /**
- * Lightweight label anchored to a layer. Tooltips are usually opened on hover
- * and can be made permanent.
+ * Легковесная подпись, привязанная к слою. Подсказки обычно открываются при
+ * наведении и могут быть постоянными.
  */
 export class Tooltip extends DivOverlay {
   /** @param {object} [options] */

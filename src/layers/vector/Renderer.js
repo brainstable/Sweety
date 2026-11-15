@@ -2,8 +2,8 @@ import { Layer } from '../Layer.js';
 import { stamp } from '../../util/index.js';
 
 /**
- * Abstract renderer that owns a shared DOM surface for many vector layers.
- * Subclasses implement SVG or Canvas drawing.
+ * Абстрактный рендерер, владеющий общей DOM-поверхностью для множества векторных слоёв.
+ * Подклассы реализуют отрисовку в SVG или Canvas.
  */
 export class Renderer extends Layer {
   /** @param {object} [options] */
@@ -38,7 +38,7 @@ export class Renderer extends Layer {
   }
 
   /**
-   * Register a path and create its drawing node.
+   * Регистрирует path и создаёт его узел отрисовки.
    * @param {import('./Path.js').Path} layer
    */
   _initPath(layer) {
@@ -47,13 +47,13 @@ export class Renderer extends Layer {
   }
 
   /**
-   * Attach an already registered path to the drawing surface.
+   * Подключает уже зарегистрированный path к поверхности отрисовки.
    * @param {import('./Path.js').Path} _layer
    */
   _addPath(_layer) {}
 
   /**
-   * Remove a path from the drawing surface.
+   * Удаляет path с поверхности отрисовки.
    * @param {import('./Path.js').Path} layer
    */
   _removePath(layer) {
@@ -62,7 +62,7 @@ export class Renderer extends Layer {
   }
 
   /**
-   * Redraw one path.
+   * Перерисовывает один path.
    * @param {import('./Path.js').Path} _layer
    */
   _updatePath(_layer) {}

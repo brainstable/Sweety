@@ -3,8 +3,8 @@ import { create, empty, on, stopPropagation } from '../util/dom.js';
 import { stamp } from '../util/index.js';
 
 /**
- * Layer switcher with radio groups for base layers and checkboxes for
- * overlays.
+ * Переключатель слоёв: радиокнопки для базовых слоёв и флажки для
+ * дополнительных.
  *
  * @example
  * new LayersControl(
@@ -69,7 +69,7 @@ export class LayersControl extends Control {
   }
 
   /**
-   * Add a base layer entry.
+   * Добавляет запись базового слоя.
    * @param {import('../layers/Layer.js').Layer} layer
    * @param {string} name
    * @returns {this}
@@ -81,7 +81,7 @@ export class LayersControl extends Control {
   }
 
   /**
-   * Add an overlay entry.
+   * Добавляет запись дополнительного слоя.
    * @param {import('../layers/Layer.js').Layer} layer
    * @param {string} name
    * @returns {this}
@@ -93,7 +93,7 @@ export class LayersControl extends Control {
   }
 
   /**
-   * Remove a layer entry by object.
+   * Удаляет запись слоя по объекту.
    * @param {import('../layers/Layer.js').Layer} layer
    * @returns {this}
    */

@@ -3,9 +3,9 @@ import { getMousePosition, getWheelDelta, off, on, preventDefault } from '../uti
 import { requestAnimFrame } from '../util/index.js';
 
 /**
- * Wheel and trackpad zoom. Wheel deltas are accumulated and applied after a
- * short debounce, so a single gesture produces one predictable zoom step
- * instead of a burst of animations.
+ * Масштабирование колесом мыши и тачпадом. Приращения колеса накапливаются и
+ * применяются после короткой задержки, поэтому один жест даёт один предсказуемый
+ * шаг масштаба вместо серии анимаций.
  */
 export class ScrollWheelZoom extends Handler {
   /** @private */
@@ -35,8 +35,8 @@ export class ScrollWheelZoom extends Handler {
     const delta = getWheelDelta(event);
     if (!delta) return;
 
-    // Browsers report tiny deltas for pinch-to-zoom trackpads. Normalise those
-    // so the interaction feels the same as a mouse wheel.
+    // Браузеры сообщают очень малые приращения при жесте «щипок» на тачпаде.
+    // Нормируем их, чтобы взаимодействие ощущалось так же, как с колесом мыши.
     const normalised = event.ctrlKey ? delta * 10 : delta;
     this._delta = (this._delta || 0) + normalised;
     this._point = point;

@@ -3,8 +3,8 @@ import { Bounds } from '../../core/Bounds.js';
 import { extend } from '../../util/index.js';
 
 /**
- * A filled polygon. Multiple rings are treated as one polygon with holes and
- * rendered with the even-odd fill rule.
+ * Полигон с заливкой. Несколько колец трактуются как один полигон с отверстиями
+ * и отрисовываются по правилу заливки even-odd.
  */
 export class Polygon extends Polyline {
   /**
@@ -14,7 +14,7 @@ export class Polygon extends Polyline {
   constructor(latlngs = [], options = {}) {
     super(latlngs, extend({ fill: true, fillOpacity: 0.25 }, options));
     if (this._latlngs.length === 1 && this._latlngs[0].length > 0) {
-      // Normalise the common single-ring input to GeoJSON's nested shape.
+      // Приводим распространённый входной формат с одним кольцом к вложенной структуре GeoJSON.
       this._latlngs = [this._latlngs[0]];
     }
     this._closed = true;

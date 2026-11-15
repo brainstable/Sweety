@@ -22,8 +22,8 @@ const DEFAULT_OPTIONS = {
 };
 
 /**
- * A geographic marker with image or HTML icons, DOM events, keyboard access
- * and optional pointer dragging.
+ * Географический маркер с растровыми или HTML-иконками, DOM-событиями,
+ * доступом с клавиатуры и необязательным перетаскиванием указателем.
  */
 export class Marker extends Layer {
   /**
@@ -164,7 +164,7 @@ export class Marker extends Layer {
   }
 
   /**
-   * Recalculate the marker's screen position and z-index.
+   * Пересчитывает экранную позицию маркера и его z-index.
    * @private
    */
   _update() {
@@ -182,7 +182,7 @@ export class Marker extends Layer {
   }
 
   /**
-   * Move the marker.
+   * Перемещает маркер.
    * @param {LatLng|number[]} latlng
    * @returns {this}
    */
@@ -201,7 +201,7 @@ export class Marker extends Layer {
   }
 
   /**
-   * Replace the icon.
+   * Заменяет иконку.
    * @param {import('./Marker.Icon.js').Icon} icon
    * @returns {this}
    */
@@ -231,7 +231,7 @@ export class Marker extends Layer {
   }
 
   /**
-   * Change the marker's stacking offset.
+   * Меняет смещение маркера в порядке наложения.
    * @param {number} offset
    * @returns {this}
    */
@@ -252,7 +252,7 @@ export class Marker extends Layer {
   }
 
   /**
-   * Enable or disable dragging at runtime.
+   * Включает или выключает перетаскивание во время работы.
    * @param {boolean} draggable
    * @returns {this}
    */
@@ -282,7 +282,7 @@ export class Marker extends Layer {
   }
 
   /**
-   * GeoJSON representation of the marker.
+   * Представление маркера в формате GeoJSON.
    * @returns {object}
    */
   toGeoJSON() {

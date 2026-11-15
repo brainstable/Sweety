@@ -1,10 +1,10 @@
 let eventId = 0;
 
 /**
- * Event object passed to listeners.
+ * Объект события, передаваемый слушателям.
  *
- * `target` is the object that fired the event, while `sourceTarget` remains
- * the original object when an event bubbles through a LayerGroup.
+ * `target` — объект, инициировавший событие, а `sourceTarget` сохраняет
+ * исходный объект, когда событие всплывает через LayerGroup.
  */
 export class Event {
   /**
@@ -31,14 +31,14 @@ export class Event {
 }
 
 /**
- * Lightweight event emitter used by maps, layers, handlers and controls.
- * Supports DOM-like namespaces (`map click`), `once`, contexts and bubbling
- * through event parents.
+ * Лёгкий эмиттер событий, используемый картами, слоями, обработчиками и контролами.
+ * Поддерживает пространства имён в стиле DOM (`map click`), `once`, контексты и
+ * всплытие через родительские объекты событий.
  */
 export class Evented {
   /**
-   * Register a listener. `types` may be space-separated and `fn` may be an
-   * object map of `{ type: handler }`.
+   * Регистрирует слушателя. `types` может содержать несколько типов через пробел,
+   * а `fn` — объект-словарь вида `{ type: handler }`.
    * @param {string|Record<string, Function>} types
    * @param {Function} [fn]
    * @param {object} [context=this]
@@ -69,8 +69,8 @@ export class Evented {
   }
 
   /**
-   * Remove a previously registered listener. Calling without `fn` removes
-   * every listener for the given types.
+   * Удаляет ранее зарегистрированного слушателя. Вызов без `fn` удаляет
+   * всех слушателей указанных типов.
    * @param {string} [types]
    * @param {Function} [fn]
    * @param {object} [context]
@@ -105,7 +105,7 @@ export class Evented {
   }
 
   /**
-   * Register a listener that removes itself after the first call.
+   * Регистрирует слушателя, который удаляется после первого вызова.
    * @param {string} types
    * @param {Function} fn
    * @param {object} [context=this]
@@ -124,10 +124,10 @@ export class Evented {
   }
 
   /**
-   * Emit an event.
+   * Генерирует событие.
    * @param {string} type
    * @param {object} [data]
-   * @param {boolean} [propagate=true] bubble to registered event parents
+   * @param {boolean} [propagate=true] всплывать до зарегистрированных родительских объектов
    * @returns {this}
    */
   fire(type, data = {}, propagate = true) {
@@ -135,7 +135,7 @@ export class Evented {
 
     const event = data instanceof Event ? data : new Event(type, this, data);
 
-    // Snapshot listeners so handlers can safely unsubscribe during dispatch.
+    // Копируем список слушателей, чтобы обработчики могли безопасно отписываться во время рассылки.
     const listeners = this._events && this._events[type] ? this._events[type].slice() : [];
     for (const entry of listeners) {
       if (entry.once) this.off(type, entry.fn, entry.ctx);
@@ -147,7 +147,7 @@ export class Evented {
   }
 
   /**
-   * Whether at least one listener (optionally including event parents) exists.
+   * Проверяет, есть ли хотя бы один слушатель (при необходимости — включая родителей событий).
    * @param {string} type
    * @param {boolean} [propagate=false]
    * @returns {boolean}
@@ -159,8 +159,8 @@ export class Evented {
   }
 
   /**
-   * Register an event parent. Events bubble to parents unless they have
-   * already visited that parent.
+   * Регистрирует родительский объект событий. События всплывают к родителям,
+   * если ещё не посещали их.
    * @param {Evented} parent
    * @returns {this}
    */
@@ -172,7 +172,7 @@ export class Evented {
   }
 
   /**
-   * Remove an event parent.
+   * Удаляет родительский объект событий.
    * @param {Evented} parent
    * @returns {this}
    */
@@ -184,7 +184,7 @@ export class Evented {
   }
 
   /**
-   * Bubble an event to all registered parents.
+   * Всплывает событие ко всем зарегистрированным родителям.
    * @param {Event} event
    * @private
    */
@@ -200,8 +200,8 @@ export class Evented {
       event.propagatedFrom = this;
       event.layer = this;
       parent.fire(event.type, event, true);
-      // Parents without their own event parents do not mark themselves, so the
-      // caller marks them after dispatch to keep diamond graphs duplicate-free.
+      // Родители без собственных родителей событий не помечают себя, поэтому
+      // вызывающий код помечает их после рассылки, чтобы избежать дублей в ромбовидных графах.
       visited.add(parent);
     }
   }

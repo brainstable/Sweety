@@ -6,17 +6,17 @@ import { fallbackLatLng } from './DivOverlay.js';
 import { extend } from '../util/index.js';
 
 /**
- * Abstract base class for all map layers.
+ * Абстрактный базовый класс для всех слоёв карты.
  *
- * A layer is any object that can be added to a map and manages a DOM node or
- * renderer. Subclasses implement {@link onAdd} and {@link onRemove}; the map
- * takes care of lifecycle bookkeeping and event bubbling.
+ * Слой — это любой объект, который можно добавить на карту и который управляет
+ * DOM-узлом или рендерером. Подклассы реализуют {@link onAdd} и {@link onRemove};
+ * карта берёт на себя учёт жизненного цикла и всплытие событий.
  */
 export class Layer extends Evented {
   /**
    * @param {object} [options]
-   * @param {string} [options.pane] map pane used by the layer
-   * @param {string} [options.attribution] attribution HTML
+   * @param {string} [options.pane] панель карты, используемая слоем
+   * @param {string} [options.attribution] HTML-строка атрибуции
    */
   constructor(options = {}) {
     super();
@@ -29,7 +29,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Add the layer to a map.
+   * Добавляет слой на карту.
    * @param {import('../core/Map.js').Map} map
    * @returns {this}
    */
@@ -40,7 +40,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Remove the layer from its current map.
+   * Удаляет слой с текущей карты.
    * @returns {this}
    */
   remove() {
@@ -49,7 +49,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Remove the layer from a specific map.
+   * Удаляет слой с указанной карты.
    * @param {import('../core/Map.js').Map} map
    * @returns {this}
    */
@@ -59,20 +59,20 @@ export class Layer extends Evented {
   }
 
   /**
-   * Called by the map when the layer is added. Subclasses create their DOM.
+   * Вызывается картой при добавлении слоя. Подклассы создают свой DOM.
    * @param {import('../core/Map.js').Map} map
    */
   onAdd(_map) {}
 
   /**
-   * Called by the map when the layer is removed. Subclasses clean up.
+   * Вызывается картой при удалении слоя. Подклассы освобождают ресурсы.
    * @param {import('../core/Map.js').Map} map
    */
   onRemove(_map) {}
 
   /**
-   * Resolve a pane, falling back to the layer's configured pane and then the
-   * overlay pane.
+   * Возвращает панель: сначала запрошенную, затем настроенную у слоя, затем
+   * панель оверлеев.
    * @param {string} [name]
    * @returns {HTMLElement|undefined}
    */
@@ -82,7 +82,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Attribution text associated with this layer.
+   * Текст атрибуции, связанный с этим слоем.
    * @returns {string|null}
    */
   getAttribution() {
@@ -91,7 +91,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Set the z-index of the layer container.
+   * Задаёт z-index контейнера слоя.
    * @param {number} zIndex
    * @returns {this}
    */
@@ -102,7 +102,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Bring the layer container to the front of its pane.
+   * Переносит контейнер слоя на передний план своей панели.
    * @returns {this}
    */
   bringToFront() {
@@ -113,7 +113,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Send the layer container to the back of its pane.
+   * Отправляет контейнер слоя на задний план своей панели.
    * @returns {this}
    */
   bringToBack() {
@@ -125,11 +125,11 @@ export class Layer extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Popups
+   * Всплывающие окна
    * ----------------------------------------------------------------------- */
 
   /**
-   * Bind a popup that opens when the layer is clicked.
+   * Привязывает всплывающее окно, открывающееся по клику на слой.
    * @param {string|HTMLElement|Function} content
    * @param {object} [options]
    * @returns {this}
@@ -152,7 +152,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Update popup content without rebuilding the binding.
+   * Обновляет содержимое всплывающего окна без пересоздания привязки.
    * @param {string|HTMLElement|Function} content
    * @returns {this}
    */
@@ -162,7 +162,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Open the bound popup.
+   * Открывает привязанное всплывающее окно.
    * @param {import('../core/LatLng.js').LatLng|number[]} [latlng]
    * @returns {this}
    */
@@ -178,13 +178,13 @@ export class Layer extends Evented {
     return this;
   }
 
-  /** Close the bound popup. @returns {this} */
+  /** Закрывает привязанное всплывающее окно. @returns {this} */
   closePopup() {
     this._popup?.close();
     return this;
   }
 
-  /** Toggle the bound popup. @returns {this} */
+  /** Переключает привязанное всплывающее окно. @returns {this} */
   togglePopup() {
     if (!this._popup) return this;
     if (this.isPopupOpen()) this.closePopup();
@@ -197,7 +197,7 @@ export class Layer extends Evented {
     return Boolean(this._popup && this._popup.isOpen());
   }
 
-  /** Remove the popup binding. @returns {this} */
+  /** Удаляет привязку всплывающего окна. @returns {this} */
   unbindPopup() {
     if (!this._popup) return this;
     this._popup.close();
@@ -221,11 +221,11 @@ export class Layer extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Tooltips
+   * Всплывающие подсказки
    * ----------------------------------------------------------------------- */
 
   /**
-   * Bind a tooltip that opens on hover.
+   * Привязывает всплывающую подсказку, открывающуюся при наведении.
    * @param {string|HTMLElement|Function} content
    * @param {object} [options]
    * @returns {this}
@@ -257,7 +257,7 @@ export class Layer extends Evented {
   }
 
   /**
-   * Open the bound tooltip.
+   * Открывает привязанную всплывающую подсказку.
    * @param {import('../core/LatLng.js').LatLng|number[]} [latlng]
    * @returns {this}
    */
@@ -273,13 +273,13 @@ export class Layer extends Evented {
     return this;
   }
 
-  /** Close the bound tooltip. @returns {this} */
+  /** Закрывает привязанную всплывающую подсказку. @returns {this} */
   closeTooltip() {
     this._tooltip?.close();
     return this;
   }
 
-  /** Toggle the bound tooltip. @returns {this} */
+  /** Переключает привязанную всплывающую подсказку. @returns {this} */
   toggleTooltip() {
     if (!this._tooltip) return this;
     if (this.isTooltipOpen()) this.closeTooltip();
@@ -292,7 +292,7 @@ export class Layer extends Evented {
     return Boolean(this._tooltip && this._tooltip.isOpen());
   }
 
-  /** Remove the tooltip binding. @returns {this} */
+  /** Удаляет привязку всплывающей подсказки. @returns {this} */
   unbindTooltip() {
     if (!this._tooltip) return this;
     this._tooltip.close();

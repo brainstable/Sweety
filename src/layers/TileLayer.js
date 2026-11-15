@@ -54,8 +54,8 @@ const DEFAULT_OPTIONS = {
 };
 
 /**
- * XYZ tile layer with visible-tile virtualisation, subdomains, retina URLs,
- * a DOM image cache and retry handling.
+ * Слой XYZ-плиток с виртуализацией видимых плиток, поддоменами, retina-URL,
+ * кэшем DOM-изображений и обработкой повторных попыток.
  *
  * @example
  * new TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -127,8 +127,8 @@ export class TileLayer extends Layer {
   }
 
   /**
-   * Recompute the visible tile grid. Only tiles inside the viewport plus
-   * `keepBuffer` are kept in the DOM.
+   * Пересчитывает сетку видимых плиток. В DOM остаются только плитки в пределах
+   * вьюпорта плюс `keepBuffer`.
    * @private
    */
   _update() {
@@ -197,9 +197,9 @@ export class TileLayer extends Layer {
   }
 
   /**
-   * Inclusive tile coordinate range for the current viewport, including the
-   * configured buffer. This is the core of tile virtualisation: only these
-   * coordinates are materialised in the DOM.
+   * Включающий диапазон координат плиток для текущего вьюпорта с учётом
+   * настроенного буфера. Это ядро виртуализации плиток: в DOM материализуются
+   * только эти координаты.
    * @param {number} [tileZoom=this._tileZoom]
    * @returns {{minX:number,maxX:number,minY:number,maxY:number}|null}
    */
@@ -221,7 +221,7 @@ export class TileLayer extends Layer {
     if (!this.options.noWrap) {
       const worldPx = worldTiles * tileSize;
       if (se.x - nw.x < worldPx) {
-        // Keep the visual range; the URL x coordinate is wrapped separately.
+        // Сохраняем визуальный диапазон; координата x в URL разворачивается отдельно.
         minX = Math.max(minX, -worldTiles);
         maxX = Math.min(maxX, worldTiles * 2);
       }
@@ -348,7 +348,7 @@ export class TileLayer extends Layer {
   }
 
   /**
-   * Build a URL from the template.
+   * Строит URL по шаблону.
    * @param {{x:number,y:number,z:number}} coords
    * @returns {string}
    */
@@ -369,7 +369,7 @@ export class TileLayer extends Layer {
   }
 
   /**
-   * Change the URL template and optionally redraw.
+   * Меняет шаблон URL и при необходимости перерисовывает слой.
    * @param {string} urlTemplate
    * @param {boolean} [noRedraw=false]
    * @returns {this}
@@ -384,7 +384,7 @@ export class TileLayer extends Layer {
   }
 
   /**
-   * Set container opacity.
+   * Задаёт прозрачность контейнера.
    * @param {number} opacity
    * @returns {this}
    */
@@ -400,7 +400,7 @@ export class TileLayer extends Layer {
     return (typeof value === 'function' ? value.call(this) : value) || null;
   }
 
-  /** Remove and recreate all tiles. @returns {this} */
+  /** Удаляет и заново создаёт все плитки. @returns {this} */
   redraw() {
     this._clearTiles();
     this._tileZoom = null;
@@ -446,7 +446,7 @@ export class TileLayer extends Layer {
     this._tileCache.set(url, element);
   }
 
-  /** Clear the in-memory image cache. @returns {this} */
+  /** Очищает кэш изображений в памяти. @returns {this} */
   clearTileCache() {
     this._clearCache();
     return this;
@@ -457,12 +457,12 @@ export class TileLayer extends Layer {
     this._tileCache.clear();
   }
 
-  /** @returns {number} number of tiles currently in the DOM */
+  /** @returns {number} число плиток, сейчас находящихся в DOM */
   getActiveTileCount() {
     return Object.keys(this._tiles).length;
   }
 
-  /** @returns {number} number of cached images */
+  /** @returns {number} число изображений в кэше */
   getCacheSize() {
     return this._tileCache.size;
   }

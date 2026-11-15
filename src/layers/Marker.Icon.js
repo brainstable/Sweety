@@ -1,6 +1,6 @@
 const MARKER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41"><path fill="#2f6fed" stroke="#ffffff" stroke-width="1.5" d="M12.5 1C6.15 1 1 6.05 1 12.28c0 8.24 11.5 26.72 11.5 26.72S24 20.52 24 12.28C24 6.05 18.85 1 12.5 1z"/><circle cx="12.5" cy="12.2" r="4.7" fill="#ffffff"/></svg>`;
 
-/** Default marker image as an inline data URI, so no asset pipeline is needed. */
+/** Иконка маркера по умолчанию в виде встроенного data URI, поэтому сборка ассетов не нужна. */
 export const DEFAULT_ICON_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(MARKER_SVG)}`;
 
 const ICON_DEFAULTS = {
@@ -17,7 +17,7 @@ const ICON_DEFAULTS = {
 };
 
 /**
- * Image-based marker icon. Sizes and anchors are in CSS pixels.
+ * Маркерная иконка на основе изображения. Размеры и якоря задаются в CSS-пикселях.
  */
 export class Icon {
   /** @param {object} [options] */
@@ -26,7 +26,7 @@ export class Icon {
   }
 
   /**
-   * Create the icon element.
+   * Создаёт элемент иконки.
    * @returns {HTMLImageElement}
    */
   createIcon() {
@@ -40,7 +40,7 @@ export class Icon {
   }
 
   /**
-   * Create an optional shadow element.
+   * Создаёт необязательный элемент тени.
    * @returns {HTMLImageElement|null}
    */
   createShadow() {
@@ -69,7 +69,7 @@ export class Icon {
 }
 
 /**
- * HTML-based marker icon, useful for labels, counters and custom designs.
+ * Маркерная иконка на основе HTML: подписи, счётчики, произвольная разметка.
  */
 export class DivIcon extends Icon {
   /** @param {object} [options] */
@@ -115,5 +115,5 @@ export class DivIcon extends Icon {
   }
 }
 
-/** Shared default marker icon. */
+/** Общая иконка маркера по умолчанию. */
 export const defaultIcon = new Icon();

@@ -2,10 +2,10 @@ import { EARTH_RADIUS, LatLng } from '../core/LatLng.js';
 import { toDeg, toRad } from '../util/index.js';
 
 /**
- * Destination point along a great circle.
+ * Точка назначения на большом круге.
  * @param {LatLng|number[]} start
- * @param {number} distance metres
- * @param {number} bearing degrees clockwise from north
+ * @param {number} distance расстояние в метрах
+ * @param {number} bearing азимут в градусах по часовой стрелке от севера
  * @returns {LatLng}
  */
 export function destinationPoint(start, distance, bearing) {

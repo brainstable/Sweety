@@ -1,24 +1,24 @@
 /**
- * Small, dependency-free helpers shared by every Sweety module.
+ * Небольшие вспомогательные функции без зависимостей, общие для всех модулей Sweety.
  * @module util
  */
 
-/** @returns {boolean} True when `value` is a plain object. */
+/** @returns {boolean} `true`, если `value` — простой объект. */
 export function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** @returns {boolean} True when `value` is a finite number. */
+/** @returns {boolean} `true`, если `value` — конечное число. */
 export function isNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-/** Clamp `value` into the inclusive `[min, max]` range. */
+/** Ограничивает `value` включительным диапазоном `[min, max]`. */
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-/** Wrap a number into `[min, max)` using modular arithmetic. */
+/** Приводит число к диапазону `[min, max)` по модулю. */
 export function wrapNum(value, range, includeMax = false) {
   const [min, max] = range;
   const span = max - min;
@@ -26,13 +26,13 @@ export function wrapNum(value, range, includeMax = false) {
   return mod === 0 && includeMax ? max : mod + min;
 }
 
-/** Convert degrees to radians. */
+/** Переводит градусы в радианы. */
 export const toRad = (degrees) => (degrees * Math.PI) / 180;
 
-/** Convert radians to degrees. */
+/** Переводит радианы в градусы. */
 export const toDeg = (radians) => (radians * 180) / Math.PI;
 
-/** A monotonically increasing id used to key DOM nodes and tiles. */
+/** Монотонно возрастающий идентификатор для ключевания DOM-узлов и тайлов. */
 let lastId = 0;
 export function stamp(object) {
   if (!object) return null;
@@ -49,8 +49,8 @@ export function stamp(object) {
 }
 
 /**
- * Shallowly merge own enumerable properties into `target`.
- * Later sources win. `undefined` values are ignored.
+ * Поверхностно объединяет собственные перечисляемые свойства в `target`.
+ * Более поздние источники имеют приоритет. Значения `undefined` игнорируются.
  */
 export function extend(target, ...sources) {
   for (const source of sources) {
@@ -63,10 +63,10 @@ export function extend(target, ...sources) {
 }
 
 /**
- * Replace `{placeholders}` in a string.
+ * Подставляет значения вместо `{placeholders}` в строке.
  * @param {string} templateString
  * @param {Record<string, string|number>} data
- * @param {boolean} [escape=false] HTML-escape substituted values
+ * @param {boolean} [escape=false] экранировать подставленные значения как HTML
  */
 export function template(templateString, data, escape = false) {
   return String(templateString).replace(/\{ *([\w_$-]+) *\}/g, (match, key) => {
@@ -90,15 +90,15 @@ export function template(templateString, data, escape = false) {
   });
 }
 
-/** Format a number with at most `digits` fraction digits. */
+/** Форматирует число с не более чем `digits` знаками после запятой. */
 export function formatNum(value, digits = 5) {
   const factor = 10 ** digits;
   return String(Math.round(value * factor) / factor);
 }
 
 /**
- * Return a debounced function. The last call wins; `cancel` and `flush`
- * are attached so callers can control lifecycle work.
+ * Возвращает функцию с debounce. Побеждает последний вызов; методы `cancel`
+ * и `flush` прикреплены, чтобы вызывающий код мог управлять жизненным циклом.
  */
 export function debounce(fn, wait = 100, context = null) {
   let timer = null;
@@ -131,7 +131,7 @@ export function debounce(fn, wait = 100, context = null) {
   return debounced;
 }
 
-/** Return a throttled function that runs at most once per `wait` ms. */
+/** Возвращает функцию с throttle, выполняющуюся не чаще одного раза за `wait` мс. */
 export function throttle(fn, wait = 100, context = null) {
   let last = 0;
   let timer = null;
@@ -180,15 +180,16 @@ const cancelFrame =
     ? window.cancelAnimationFrame.bind(window)
     : clearTimeout;
 
-/** Schedule a callback on the next animation frame. */
+/** Планирует callback на следующий кадр анимации. */
 export const requestAnimFrame = (callback) => requestFrame(callback);
 
-/** Cancel a callback scheduled with {@link requestAnimFrame}. */
+/** Отменяет callback, запланированный через {@link requestAnimFrame}. */
 export const cancelAnimFrame = (callback) => cancelFrame(callback);
 
 /**
- * Coalesce calls into one requestAnimationFrame tick. Useful for pointer and
- * resize events that can fire faster than the display refresh rate.
+ * Объединяет вызовы в один тик requestAnimationFrame. Полезно для событий
+ * указателя и изменения размера, которые могут приходить чаще частоты
+ * обновления экрана.
  * @param {Function} fn
  * @param {object} [context=null]
  * @returns {Function & {cancel: Function}}
@@ -215,26 +216,26 @@ export function rafThrottle(fn, context = null) {
   return throttled;
 }
 
-/** Cubic ease-out easing function for animated navigation. */
+/** Кубическая функция плавности ease-out для анимированной навигации. */
 export const easeOutCubic = (t) => 1 - (1 - t) ** 3;
 
-/** Cubic ease-in-out easing function. */
+/** Кубическая функция плавности ease-in-out. */
 export const easeInOutCubic = (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
 
-/** Device pixel ratio, clamped to a sane range. */
+/** Соотношение пикселей устройства (DPR), ограниченное разумным диапазоном. */
 export function devicePixelRatio() {
   if (typeof window === 'undefined') return 1;
   return clamp(window.devicePixelRatio || 1, 1, 4);
 }
 
-/** Whether the current device exposes touch events. */
+/** Проверяет, поддерживает ли текущее устройство сенсорные события. */
 export function hasTouch() {
   return (
     typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
   );
 }
 
-/** Read a CSS custom property from an element. */
+/** Читает пользовательское свойство CSS у элемента. */
 export function readCssVar(element, name, fallback = '') {
   if (!element || typeof getComputedStyle !== 'function') return fallback;
   return getComputedStyle(element).getPropertyValue(name).trim() || fallback;

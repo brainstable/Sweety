@@ -23,8 +23,8 @@ const DEFAULT_OPTIONS = {
 };
 
 /**
- * GeoJSON layer. Accepts FeatureCollection, Feature, Geometry and
- * GeometryCollection documents and turns every geometry into native layers.
+ * Слой GeoJSON. Принимает документы FeatureCollection, Feature, Geometry и
+ * GeometryCollection и преобразует каждую геометрию в нативные слои.
  *
  * @example
  * const geo = new GeoJSONLayer(data, {
@@ -44,7 +44,7 @@ export class GeoJSONLayer extends FeatureGroup {
   }
 
   /**
-   * Append one or more GeoJSON features.
+   * Добавляет один или несколько объектов GeoJSON.
    * @param {object} geojson
    * @returns {this}
    */
@@ -173,7 +173,7 @@ export class GeoJSONLayer extends FeatureGroup {
   }
 
   /**
-   * Coerce a GeoJSON position (`[lng, lat, alt]`) to LatLng.
+   * Приводит позицию GeoJSON (`[lng, lat, alt]`) к LatLng.
    * @param {number[]} coords
    * @returns {LatLng}
    */
@@ -194,7 +194,7 @@ export class GeoJSONLayer extends FeatureGroup {
   }
 
   /**
-   * Reset all styles, or the style of one layer.
+   * Сбрасывает все стили или стиль одного слоя.
    * @param {import('./Layer.js').Layer} [layer]
    * @returns {this}
    */
@@ -214,7 +214,7 @@ export class GeoJSONLayer extends FeatureGroup {
   }
 
   /**
-   * Set the style for all features.
+   * Задаёт стиль для всех объектов.
    * @param {object|Function} style
    * @returns {this}
    */
@@ -224,7 +224,7 @@ export class GeoJSONLayer extends FeatureGroup {
   }
 
   /**
-   * Flatten the collected layers into a FeatureCollection.
+   * Разворачивает собранные слои в единый FeatureCollection.
    * @returns {object}
    */
   toGeoJSON() {

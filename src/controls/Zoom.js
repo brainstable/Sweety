@@ -2,7 +2,7 @@ import { Control } from './Control.js';
 import { create } from '../util/dom.js';
 
 /**
- * Standard zoom in / zoom out buttons, disabled at the map's zoom limits.
+ * Стандартные кнопки приближения и отдаления, отключаемые на пределах масштаба карты.
  */
 export class ZoomControl extends Control {
   /** @param {object} [options] */

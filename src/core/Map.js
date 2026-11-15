@@ -37,22 +37,22 @@ const initHooks = [];
 
 /**
  * @typedef {object} MapOptions
- * @property {LatLng|number[]} [center=[0,0]] Initial geographic centre
- * @property {number} [zoom=0] Initial zoom
- * @property {number} [minZoom=0] Minimum zoom
- * @property {number} [maxZoom=22] Maximum zoom
- * @property {number} [zoomSnap=1] Snap interval for programmatic zoom
- * @property {number} [zoomDelta=1] Amount changed by zoomIn/zoomOut
- * @property {Bounds|number[][]} [maxBounds=null] Restrict the viewport
- * @property {import('../geo/CRS.js').CRS} [crs=EPSG3857] Coordinate reference system
- * @property {boolean} [zoomAnimation=true] Animate zoom transitions
- * @property {boolean} [fadeAnimation=true] Fade in newly loaded tiles
- * @property {boolean} [trackResize=true] Observe container size
- * @property {boolean} [preferCanvas=false] Use a shared Canvas renderer for paths
- * @property {boolean} [closePopupOnClick=true] Close popups on map click
- * @property {boolean} [zoomControl=true] Add the default zoom control
- * @property {boolean} [attributionControl=true] Add the default attribution control
- * @property {number} [zoomAnimationThreshold=4] Max zoom levels animated at once
+ * @property {LatLng|number[]} [center=[0,0]] Начальный географический центр
+ * @property {number} [zoom=0] Начальный уровень масштабирования
+ * @property {number} [minZoom=0] Минимальный уровень масштабирования
+ * @property {number} [maxZoom=22] Максимальный уровень масштабирования
+ * @property {number} [zoomSnap=1] Шаг привязки при программном масштабировании
+ * @property {number} [zoomDelta=1] Величина изменения для zoomIn/zoomOut
+ * @property {Bounds|number[][]} [maxBounds=null] Ограничивает область просмотра
+ * @property {import('../geo/CRS.js').CRS} [crs=EPSG3857] Система координат
+ * @property {boolean} [zoomAnimation=true] Анимировать переходы масштабирования
+ * @property {boolean} [fadeAnimation=true] Плавно проявлять загруженные тайлы
+ * @property {boolean} [trackResize=true] Отслеживать размер контейнера
+ * @property {boolean} [preferCanvas=false] Использовать общий Canvas-рендерер для путей
+ * @property {boolean} [closePopupOnClick=true] Закрывать попапы по клику на карте
+ * @property {boolean} [zoomControl=true] Добавлять стандартный контрол масштаба
+ * @property {boolean} [attributionControl=true] Добавлять стандартный контрол атрибуции
+ * @property {number} [zoomAnimationThreshold=4] Максимальное число уровней масштабирования, анимируемых одновременно
  */
 
 const DEFAULT_OPTIONS = {
@@ -86,8 +86,8 @@ const DEFAULT_OPTIONS = {
 };
 
 /**
- * Central map controller. It owns the DOM container, the view state, layer
- * registry, interaction handlers, panes and controls.
+ * Центральный контроллер карты. Владеет DOM-контейнером, состоянием вида,
+ * реестром слоёв, обработчиками взаимодействия, панелями и контролами.
  *
  * @example
  * const map = new Map('map', { center: [55.75, 37.61], zoom: 10 });
@@ -95,9 +95,9 @@ const DEFAULT_OPTIONS = {
  */
 export class Map extends Evented {
   /**
-   * Register a function invoked at the end of every Map construction.
-   * Plugins use this hook to add methods or controls without monkey-patching
-   * the constructor.
+   * Регистрирует функцию, вызываемую по завершении каждого создания Map.
+   * Плагины используют этот хук, чтобы добавлять методы или контролы, не
+   * вмешиваясь в конструктор.
    * @param {Function} hook
    * @returns {typeof Map}
    */
@@ -188,7 +188,7 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Layout and lifecycle
+   * Вёрстка и жизненный цикл
    * ----------------------------------------------------------------------- */
 
   /** @private */
@@ -283,7 +283,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Instantiate and expose an interaction handler on the map.
+   * Создаёт и публикует обработчик взаимодействия на карте.
    * @param {string} name
    * @param {new (map: Map) => import('./Handler.js').Handler} HandlerClass
    * @param {boolean} [enabled=true]
@@ -299,10 +299,10 @@ export class Map extends Evented {
   }
 
   /**
-   * Apply a centre during an active drag or kinetic animation. Unlike
-   * {@link setView}, this does not start or end a movement transaction.
+   * Применяет центр во время активного перетаскивания или инерционной анимации.
+   * В отличие от {@link setView}, не начинает и не завершает транзакцию перемещения.
    * @param {LatLng|number[]} center
-   * @returns {boolean} whether the centre actually changed
+   * @returns {boolean} изменился ли центр на самом деле
    * @private
    */
   _moveDuringDrag(center) {
@@ -361,7 +361,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Current map size in CSS pixels.
+   * Текущий размер карты в CSS-пикселях.
    * @returns {Point}
    */
   getSize() {
@@ -377,10 +377,10 @@ export class Map extends Evented {
   }
 
   /**
-   * Re-read the container size. Useful after showing a previously hidden map.
+   * Повторно считывает размер контейнера. Полезно после показа ранее скрытой карты.
    * @param {object} [options]
-   * @param {boolean} [options.pan=true] Keep the centre while resizing
-   * @param {boolean} [options.debounce=false] Coalesce resize events
+   * @param {boolean} [options.pan=true] Сохранять центр при изменении размера
+   * @param {boolean} [options.debounce=false] Объединять события изменения размера
    * @returns {this}
    */
   invalidateSize(options = {}) {
@@ -419,7 +419,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Destroy the map, remove all layers and handlers, and detach listeners.
+   * Уничтожает карту, удаляет все слои и обработчики и отписывает слушателей.
    * @returns {this}
    */
   remove() {
@@ -473,8 +473,8 @@ export class Map extends Evented {
   }
 
   /**
-   * Run a callback once the map is ready. If already loaded it runs
-   * asynchronously to keep ordering predictable.
+   * Вызывает callback, когда карта готова. Если карта уже загружена, callback
+   * выполняется асинхронно, чтобы порядок вызовов оставался предсказуемым.
    * @param {Function} callback
    * @param {object} [context=this]
    * @returns {this}
@@ -489,15 +489,15 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * View state
+   * Состояние вида
    * ----------------------------------------------------------------------- */
 
   /**
-   * Set the centre and zoom, firing the standard view event sequence.
+   * Задаёт центр и уровень масштабирования, генерируя стандартную последовательность событий вида.
    * @param {LatLng|number[]} center
    * @param {number} [zoom=this._zoom]
    * @param {object} [options]
-   * @param {boolean} [options.animate=false] Animate the transition
+   * @param {boolean} [options.animate=false] Анимировать переход
    * @param {boolean} [options.noMoveStart=false]
    * @returns {this}
    */
@@ -561,8 +561,8 @@ export class Map extends Evented {
   }
 
   /**
-   * Re-render all layers at the current view. Called after every committed
-   * movement; layers decide whether they need to load or only reposition.
+   * Перерисовывает все слои для текущего вида. Вызывается после каждого
+   * зафиксированного перемещения; слои сами решают, нужна ли загрузка или только смена позиции.
    * @private
    */
   _updateLayers() {
@@ -585,7 +585,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Clamp a centre so the viewport stays inside `maxBounds`.
+   * Прижимает центр так, чтобы область просмотра оставалась внутри `maxBounds`.
    * @private
    */
   _limitCenter(center, zoom, maxBounds) {
@@ -603,7 +603,7 @@ export class Map extends Evented {
     let minY = nw.y + half.y;
     let maxY = se.y - half.y;
 
-    // A world smaller than the viewport is centred rather than clamped.
+    // Мир меньше области просмотра центрируется, а не прижимается.
     if (minX > maxX) minX = maxX = (nw.x + se.x) / 2;
     if (minY > maxY) minY = maxY = (nw.y + se.y) / 2;
 
@@ -613,7 +613,7 @@ export class Map extends Evented {
     );
   }
 
-  /** @returns {LatLng} a defensive copy of the current centre */
+  /** @returns {LatLng} защитная копия текущего центра */
   getCenter() {
     return this._center.clone();
   }
@@ -654,7 +654,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Set zoom around the current centre (or a supplied anchor).
+   * Задаёт масштаб вокруг текущего центра (или переданного якоря).
    * @param {number} zoom
    * @param {object} [options]
    * @returns {this}
@@ -664,7 +664,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Change zoom relative to the current level.
+   * Изменяет масштаб относительно текущего уровня.
    * @param {number} [delta=this.options.zoomDelta]
    * @param {object} [options]
    * @returns {this}
@@ -683,7 +683,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Zoom while keeping a geographic or pixel anchor visually fixed.
+   * Масштабирует, сохраняя географический или пиксельный якорь визуально неподвижным.
    * @param {LatLng|number[]|Point|{x:number,y:number}} anchor
    * @param {number} zoom
    * @param {object} [options]
@@ -708,7 +708,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Zoom around a screen point, used by wheel and pinch handlers.
+   * Масштабирует вокруг точки экрана; используется обработчиками колеса и пинч-жеста.
    * @param {Point} point
    * @param {number} zoom
    * @param {object} [options]
@@ -723,13 +723,13 @@ export class Map extends Evented {
     return this.project(center, zoom).subtract(this._size.clone().divideBy(2));
   }
 
-  /** @returns {Point} world pixel origin of the viewport */
+  /** @returns {Point} мировое пиксельное начало области просмотра */
   getPixelOrigin() {
     return this._pixelOrigin.clone();
   }
 
   /**
-   * Pixel bounds of the viewport.
+   * Пиксельные границы области просмотра.
    * @param {LatLng|number[]} [center]
    * @param {number} [zoom]
    * @returns {Bounds}
@@ -748,13 +748,13 @@ export class Map extends Evented {
     );
   }
 
-  /** @returns {Bounds} geographic viewport bounds */
+  /** @returns {Bounds} географические границы области просмотра */
   getBounds() {
     return this.getPixelBounds();
   }
 
   /**
-   * Restrict panning to geographic bounds.
+   * Ограничивает панорамирование географическими границами.
    * @param {Bounds|number[][]|null} bounds
    * @returns {this}
    */
@@ -772,11 +772,11 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Coordinate conversion
+   * Преобразование координат
    * ----------------------------------------------------------------------- */
 
   /**
-   * Project coordinates to world pixels.
+   * Проецирует координаты в мировые пиксели.
    * @param {LatLng|number[]} latlng
    * @param {number} [zoom=this._zoom]
    * @returns {Point}
@@ -786,7 +786,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Inverse of {@link project}.
+   * Обратное преобразование к {@link project}.
    * @param {Point|{x:number,y:number}} point
    * @param {number} [zoom=this._zoom]
    * @returns {LatLng}
@@ -797,7 +797,7 @@ export class Map extends Evented {
 
   /**
    * @param {LatLng|number[]} latlng
-   * @returns {Point} pixels relative to the map pane
+   * @returns {Point} пиксели относительно панели карты
    */
   latLngToLayerPoint(latlng) {
     return this.project(latlng).subtract(this._pixelOrigin);
@@ -813,7 +813,7 @@ export class Map extends Evented {
 
   /**
    * @param {LatLng|number[]} latlng
-   * @returns {Point} pixels relative to the container
+   * @returns {Point} пиксели относительно контейнера
    */
   latLngToContainerPoint(latlng) {
     return this.latLngToLayerPoint(latlng);
@@ -852,7 +852,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Great-circle distance between two coordinates in metres.
+   * Расстояние по большому кругу между двумя координатами в метрах.
    * @param {LatLng|number[]} from
    * @param {LatLng|number[]} to
    * @returns {number}
@@ -862,7 +862,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Scale factor between two zoom levels.
+   * Масштабный коэффициент между двумя уровнями масштабирования.
    * @param {number} toZoom
    * @param {number} [fromZoom=this._zoom]
    * @returns {number}
@@ -872,7 +872,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Zoom level that corresponds to a scale relative to `fromZoom`.
+   * Уровень масштабирования, соответствующий масштабу относительно `fromZoom`.
    * @param {number} scale
    * @param {number} [fromZoom=this._zoom]
    * @returns {number}
@@ -882,11 +882,11 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Panning and fitting
+   * Панорамирование и подгонка
    * ----------------------------------------------------------------------- */
 
   /**
-   * Shift the viewport by a pixel offset.
+   * Сдвигает область просмотра на пиксельное смещение.
    * @param {Point|number[]} offset
    * @param {object} [options]
    * @returns {this}
@@ -899,7 +899,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Pan to a coordinate at the current zoom.
+   * Панорамирует к координате при текущем масштабе.
    * @param {LatLng|number[]} center
    * @param {object} [options]
    * @returns {this}
@@ -909,7 +909,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Pan the map minimally so a coordinate becomes visible.
+   * Минимально панорамирует карту, чтобы координата стала видимой.
    * @param {LatLng|number[]} latlng
    * @param {object} [options]
    * @param {number[]} [options.padding=[0,0]]
@@ -926,7 +926,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Pan the map minimally so the whole viewport stays inside bounds.
+   * Минимально панорамирует карту, чтобы вся область просмотра оставалась внутри границ.
    * @param {Bounds|number[][]} bounds
    * @param {object} [options]
    * @returns {this}
@@ -940,9 +940,9 @@ export class Map extends Evented {
   }
 
   /**
-   * Zoom level that fits bounds in the viewport.
+   * Уровень масштабирования, при котором границы помещаются в область просмотра.
    * @param {Bounds|number[][]} bounds
-   * @param {boolean} [inside=false] fit the viewport inside bounds
+   * @param {boolean} [inside=false] вписать область просмотра в границы
    * @param {number[]|Point} [padding=[0,0]]
    * @returns {number}
    */
@@ -972,14 +972,14 @@ export class Map extends Evented {
   }
 
   /**
-   * Smoothly fly to a coordinate and zoom level. Uses a curved screen-space
-   * path and a continuous zoom interpolation rendered by the normal layer
-   * pipeline.
+   * Плавно перемещает вид к координате и уровню масштабирования. Использует
+   * искривлённую траекторию в экранном пространстве и непрерывную интерполяцию
+   * масштаба, отрисовываемую обычным конвейером слоёв.
    * @param {LatLng|number[]} center
    * @param {number} [zoom=this._zoom]
    * @param {object} [options]
-   * @param {number} [options.duration] override the computed duration
-   * @param {number} [options.curve=0.15] path curvature factor
+   * @param {number} [options.duration] переопределить вычисленную длительность
+   * @param {number} [options.curve=0.15] коэффициент кривизны траектории
    * @param {boolean} [options.animate=true]
    * @returns {this}
    */
@@ -1042,7 +1042,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Fly to the best view of bounds.
+   * Перелетает к наилучшему виду границ.
    * @param {Bounds|number[][]} bounds
    * @param {object} [options]
    * @returns {this}
@@ -1056,11 +1056,11 @@ export class Map extends Evented {
   }
 
   /**
-   * Fit geographic bounds into the viewport.
+   * Вписывает географические границы в область просмотра.
    * @param {Bounds|number[][]} bounds
    * @param {object} [options]
    * @param {number[]|Point} [options.padding=[0,0]]
-   * @param {number} [options.maxZoom] cap the computed zoom
+   * @param {number} [options.maxZoom] ограничить вычисленный масштаб
    * @param {boolean} [options.animate=false]
    * @returns {this}
    */
@@ -1075,7 +1075,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Cancel an active flyTo animation.
+   * Отменяет активную анимацию flyTo.
    * @private
    */
   _cancelFlyTo() {
@@ -1096,11 +1096,11 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Layers
+   * Слои
    * ----------------------------------------------------------------------- */
 
   /**
-   * Add a layer to the map.
+   * Добавляет слой на карту.
    * @param {import('../layers/Layer.js').Layer} layer
    * @returns {this}
    */
@@ -1129,7 +1129,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Remove a layer.
+   * Удаляет слой.
    * @param {import('../layers/Layer.js').Layer} layer
    * @returns {this}
    */
@@ -1150,7 +1150,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Iterate over layers.
+   * Перебирает слои.
    * @param {Function} callback
    * @param {object} [context]
    * @returns {this}
@@ -1168,7 +1168,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Resolve a shared renderer for a vector path.
+   * Подбирает общий рендерер для векторного пути.
    * @param {import('../layers/vector/Path.js').Path} layer
    * @returns {import('../layers/vector/Renderer.js').Renderer}
    * @private
@@ -1194,7 +1194,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Get a pane by name, creating a custom pane on demand.
+   * Возвращает панель по имени, при необходимости создавая пользовательскую панель.
    * @param {string} name
    * @param {boolean} [create=true]
    * @returns {HTMLElement|undefined}
@@ -1216,11 +1216,11 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Controls (implemented in src/controls)
+   * Контролы (реализованы в src/controls)
    * ----------------------------------------------------------------------- */
 
   /**
-   * Add a control instance.
+   * Добавляет экземпляр контрола.
    * @param {import('../controls/Control.js').Control} control
    * @returns {this}
    */
@@ -1249,7 +1249,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Remove a control instance.
+   * Удаляет экземпляр контрола.
    * @param {import('../controls/Control.js').Control} control
    * @returns {this}
    */
@@ -1264,7 +1264,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Move a control to its current position corner.
+   * Перемещает контрол в угол, соответствующий его текущей позиции.
    * @param {import('../controls/Control.js').Control} control
    * @returns {this}
    * @private
@@ -1278,13 +1278,13 @@ export class Map extends Evented {
   }
 
   /* ----------------------------------------------------------------------- *
-   * Internal animation hook used by interaction handlers
+   * Внутренний хук анимации, используемый обработчиками взаимодействия
    * ----------------------------------------------------------------------- */
 
   /**
-   * Animate a zoom transition with a CSS scale on the map pane. The target
-   * view is rendered first so tiles and vectors are already at their final
-   * resolution when the transition starts.
+   * Анимирует переход масштаба через CSS-масштабирование панели карты. Сначала
+   * отрисовывается целевой вид, чтобы к началу перехода тайлы и векторы уже были
+   * в конечном разрешении.
    * @param {LatLng} center
    * @param {number} zoom
    * @param {object} [options]
@@ -1327,7 +1327,7 @@ export class Map extends Evented {
     pane.style.transition = 'none';
     pane.style.transformOrigin = `${anchor.x}px ${anchor.y}px`;
     pane.style.transform = `scale(${startScale})`;
-    // Force a style flush before the transition to make the first frame stick.
+    // Принудительно сбрасываем стили перед переходом, чтобы первый кадр зафиксировался.
     void pane.offsetWidth;
     addClass(this._container, 'sweety-zoom-anim');
     this._zoomAnimFrame = requestAnimFrame(() => {
@@ -1339,8 +1339,8 @@ export class Map extends Evented {
   }
 
   /**
-   * Complete an in-flight zoom transition and fire `moveend`/`zoomend`.
-   * Safe to call when no transition is running.
+   * Завершает выполняющийся переход масштаба и генерирует `moveend`/`zoomend`.
+   * Безопасно вызывать, когда переход не запущен.
    * @private
    */
   _finishZoomAnimation() {
@@ -1366,7 +1366,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Tween the viewport centre over a short distance.
+   * Плавно смещает центр области просмотра на небольшое расстояние.
    * @param {LatLng} center
    * @param {object} [options]
    * @private
@@ -1410,7 +1410,7 @@ export class Map extends Evented {
   }
 
   /**
-   * Prevent the next DOM-generated click, used by drag handlers.
+   * Подавляет следующий клик, сгенерированный DOM; используется обработчиками перетаскивания.
    * @returns {this}
    */
   _suppressClick() {

@@ -2,12 +2,13 @@ import { Evented } from '../core/Evented.js';
 import { create, on, stopPropagation } from '../util/dom.js';
 import { extend } from '../util/index.js';
 
-/** Supported control corner names. */
+/** Допустимые имена углов для размещения контролов. */
 export const POSITIONS = ['topleft', 'topright', 'bottomleft', 'bottomright'];
 
 /**
- * Base class for controls placed in a map corner. Controls are interactive
- * widgets, so pointer events are stopped before they reach map handlers.
+ * Базовый класс контролов, размещаемых в углу карты. Контролы — интерактивные
+ * виджеты, поэтому события указателя останавливаются до того, как достигнут
+ * обработчиков карты.
  */
 export class Control extends Evented {
   /** @param {object} [options] */
@@ -24,7 +25,7 @@ export class Control extends Evented {
   }
 
   /**
-   * Move the control to a new corner.
+   * Перемещает контрол в новый угол.
    * @param {string} position
    * @returns {this}
    */
@@ -41,7 +42,7 @@ export class Control extends Evented {
   }
 
   /**
-   * Add to a map.
+   * Добавляет контрол на карту.
    * @param {import('../core/Map.js').Map} map
    * @returns {this}
    */
@@ -57,7 +58,7 @@ export class Control extends Evented {
   }
 
   /**
-   * Called by the map. Must return the control container.
+   * Вызывается картой. Должен вернуть контейнер контрола.
    * @param {import('../core/Map.js').Map} _map
    * @returns {HTMLElement}
    */
@@ -72,7 +73,7 @@ export class Control extends Evented {
   }
 
   /**
-   * Create the control container and stop map interactions inside it.
+   * Создаёт контейнер контрола и блокирует взаимодействие с картой внутри него.
    * @param {string} className
    * @returns {HTMLElement}
    * @protected

@@ -17,11 +17,11 @@ const DRAG_THRESHOLD = 3;
 const SAMPLE_WINDOW = 120;
 
 /**
- * Mouse and touch panning with kinetic inertia.
+ * Панорамирование мышью и касанием с инерцией.
  *
- * The handler updates the committed map centre on every animation frame. This
- * keeps tiles, markers and vectors consistent without a second coordinate
- * system, and makes interruption by a new gesture predictable.
+ * Обработчик обновляет зафиксированный центр карты на каждом кадре анимации.
+ * Это сохраняет согласованность тайлов, маркеров и векторных слоёв без второй
+ * системы координат, а прерывание новым жестом становится предсказуемым.
  */
 export class DragHandler extends Handler {
   /** @private */
@@ -82,7 +82,7 @@ export class DragHandler extends Handler {
       try {
         this._map.getContainer().setPointerCapture(event.pointerId);
       } catch {
-        /* pointer capture is an optimisation, not a requirement */
+        /* Захват указателя — оптимизация, а не обязательное требование */
       }
     }
 
@@ -198,7 +198,7 @@ export class DragHandler extends Handler {
       0,
       Number(this._map.options.inertiaMaxSpeed) || 1500,
     );
-    // Pointer movement is inverted: the map follows the finger.
+    // Движение указателя инвертируется: карта следует за пальцем.
     return { x: (-dx / distance) * speed, y: (-dy / distance) * speed };
   }
 
@@ -275,7 +275,7 @@ export class DragHandler extends Handler {
       try {
         container.releasePointerCapture(event.pointerId);
       } catch {
-        /* ignore stale pointer ids */
+        /* игнорируем устаревшие идентификаторы указателей */
       }
     }
   }

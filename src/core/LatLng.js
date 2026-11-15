@@ -1,16 +1,16 @@
 import { toRad } from '../util/index.js';
 
-/** Mean Earth radius in metres (IUGG). */
+/** Средний радиус Земли в метрах (IUGG). */
 export const EARTH_RADIUS = 6371000;
 
-/** Maximum absolute latitude accepted by Web Mercator. */
+/** Максимальная абсолютная широта, допустимая в Web Mercator. */
 export const MAX_MERCATOR_LATITUDE = 85.0511287798;
 
 /**
- * Geographic coordinate.
+ * Географическая координата.
  *
- * The constructor accepts `(lat, lng, alt)`, `[lat, lng, alt]` or
- * `{ lat, lng, alt }`, which keeps it convenient at API boundaries.
+ * Конструктор принимает `(lat, lng, alt)`, `[lat, lng, alt]` или
+ * `{ lat, lng, alt }`, что удобно на границах API.
  */
 export class LatLng {
   /**
@@ -51,14 +51,14 @@ export class LatLng {
   }
 
   /**
-   * @returns {LatLng} an independent copy
+   * @returns {LatLng} независимая копия
    */
   clone() {
     return new LatLng(this.lat, this.lng, this.alt);
   }
 
   /**
-   * Longitude wrapped into `[-180, 180)`.
+   * Долгота, приведённая к диапазону `[-180, 180)`.
    * @returns {LatLng}
    */
   wrap() {
@@ -69,7 +69,7 @@ export class LatLng {
   }
 
   /**
-   * Great-circle distance in metres using the haversine formula.
+   * Расстояние по большому кругу в метрах по формуле гаверсинусов.
    * @param {LatLng|number[]|{lat:number,lng:number}} other
    * @returns {number}
    */
@@ -88,7 +88,7 @@ export class LatLng {
   }
 
   /**
-   * Compare coordinates within a small tolerance.
+   * Сравнивает координаты с небольшим допуском.
    * @param {LatLng|number[]|{lat:number,lng:number}} other
    * @param {number} [maxMargin=1e-9]
    */
@@ -109,7 +109,7 @@ export class LatLng {
 }
 
 /**
- * Factory that also clones existing coordinates.
+ * Фабрика, которая также клонирует существующие координаты.
  * @param {number|number[]|{lat:number,lng:number}|LatLng} lat
  * @param {number} [lng]
  * @param {number} [alt]

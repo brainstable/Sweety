@@ -1,6 +1,6 @@
 /**
- * Base class for map interaction handlers. A handler is enabled or disabled
- * as a unit and is responsible for cleaning up its own DOM listeners.
+ * Базовый класс обработчиков взаимодействия с картой. Обработчик включается и
+ * выключается целиком и сам отвечает за очистку своих DOM-слушателей.
  */
 export class Handler {
   /** @param {import('./Map.js').Map} map */
@@ -9,7 +9,7 @@ export class Handler {
     this._enabled = false;
   }
 
-  /** Enable the handler. Idempotent. @returns {this} */
+  /** Включает обработчик. Идемпотентно. @returns {this} */
   enable() {
     if (this._enabled) return this;
     this._enabled = true;
@@ -17,7 +17,7 @@ export class Handler {
     return this;
   }
 
-  /** Disable the handler. Idempotent. @returns {this} */
+  /** Выключает обработчик. Идемпотентно. @returns {this} */
   disable() {
     if (!this._enabled) return this;
     this._enabled = false;

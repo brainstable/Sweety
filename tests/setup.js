@@ -1,6 +1,6 @@
 import { afterEach } from 'vitest';
 
-// jsdom does not implement ResizeObserver, which Map uses for responsive layout.
+// jsdom не реализует ResizeObserver, который Map использует для адаптивной раскладки.
 class ResizeObserverMock {
   constructor(callback) {
     this.callback = callback;
@@ -30,7 +30,7 @@ class ResizeObserverMock {
 ResizeObserverMock.instances = [];
 globalThis.ResizeObserver = ResizeObserverMock;
 
-// jsdom reports zero dimensions. Tests that care call mockElementSize.
+// jsdom сообщает нулевые размеры. Тесты, которым это важно, вызывают mockElementSize.
 Object.defineProperties(HTMLElement.prototype, {
   clientWidth: {
     configurable: true,
@@ -66,8 +66,8 @@ globalThis.mockElementSize = (element, width = 800, height = 600) => {
 
 globalThis.ResizeObserverMock = ResizeObserverMock;
 
-// jsdom has no canvas implementation. A recording 2D context is enough to test
-// draw order and hit testing without pulling a native canvas dependency.
+// В jsdom нет реализации canvas. Записывающего 2D-контекста достаточно для
+// проверки порядка отрисовки и проверки попаданий без нативной зависимости canvas.
 HTMLCanvasElement.prototype.getContext = function getContext(type) {
   if (type !== '2d') return null;
   if (!this.__ctx) {

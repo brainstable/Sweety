@@ -7,13 +7,13 @@ import { extend } from '../../util/index.js';
 const SEGMENTS = 64;
 
 /**
- * A geodesic circle with a radius in metres, approximated as a 64-segment
- * polygon in screen space.
+ * Геодезическая окружность с радиусом в метрах, аппроксимируемая полигоном
+ * из 64 сегментов в экранном пространстве.
  */
 export class Circle extends Path {
   /**
    * @param {LatLng|number[]} latlng
-   * @param {number} radius metres
+   * @param {number} radius радиус в метрах
    * @param {object} [options]
    */
   constructor(latlng, radius, options = {}) {
@@ -58,7 +58,7 @@ export class Circle extends Path {
   }
 
   /**
-   * @param {number} radius metres
+   * @param {number} radius радиус в метрах
    * @returns {this}
    */
   setRadius(radius) {

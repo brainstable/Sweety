@@ -1,12 +1,13 @@
 /**
- * DOM helpers. Kept deliberately small so the core stays framework-agnostic.
+ * Вспомогательные функции для DOM. Намеренно компактны, чтобы ядро
+ * оставалось независимым от фреймворков.
  * @module util/dom
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /**
- * Create an HTML element.
+ * Создаёт HTML-элемент.
  * @param {string} tagName
  * @param {string} [className]
  * @param {HTMLElement|null} [container]
@@ -20,7 +21,7 @@ export function create(tagName, className = '', container = null) {
 }
 
 /**
- * Create an SVG element in the SVG namespace.
+ * Создаёт SVG-элемент в пространстве имён SVG.
  * @param {string} tagName
  * @param {string} [attributes]
  * @param {SVGElement|null} [container]
@@ -33,7 +34,7 @@ export function createNS(tagName, attributes = '', container = null) {
   return element;
 }
 
-/** Add one or more whitespace-separated classes. */
+/** Добавляет один или несколько классов, разделённых пробелами. */
 export function addClass(element, className) {
   for (const name of className.split(/\s+/).filter(Boolean)) {
     if (!element.classList.contains(name)) element.classList.add(name);
@@ -41,7 +42,7 @@ export function addClass(element, className) {
   return element;
 }
 
-/** Remove one or more whitespace-separated classes. */
+/** Удаляет один или несколько классов, разделённых пробелами. */
 export function removeClass(element, className) {
   for (const name of className.split(/\s+/).filter(Boolean)) {
     element.classList.remove(name);
@@ -49,7 +50,7 @@ export function removeClass(element, className) {
   return element;
 }
 
-/** Toggle a class, optionally forcing state. */
+/** Переключает класс, при необходимости принудительно задавая состояние. */
 export function toggleClass(element, className, force) {
   if (force === undefined) {
     element.classList.toggle(className);
@@ -61,24 +62,24 @@ export function toggleClass(element, className, force) {
   return element;
 }
 
-/** Whether an element has a class. */
+/** Проверяет, есть ли у элемента класс. */
 export function hasClass(element, className) {
   return element.classList.contains(className);
 }
 
-/** Empty an element without replacing it. */
+/** Очищает элемент, не заменяя его. */
 export function empty(element) {
   while (element.firstChild) element.removeChild(element.firstChild);
   return element;
 }
 
-/** Remove an element from the document when attached. */
+/** Удаляет элемент из документа, если он присоединён. */
 export function remove(element) {
   if (element && element.parentNode) element.parentNode.removeChild(element);
   return element;
 }
 
-/** Set inline transform position using GPU-friendly translate3d. */
+/** Задаёт встроенное позиционирование через transform с GPU-дружественным translate3d. */
 export function setPosition(element, point) {
   const x = Math.round(point.x);
   const y = Math.round(point.y);
@@ -86,20 +87,20 @@ export function setPosition(element, point) {
   return element;
 }
 
-/** Set `left`/`top` positioning, used by tiles and SVG overlays. */
+/** Задаёт позиционирование через `left`/`top`; используется тайлами и SVG-оверлеями. */
 export function setPositionAbsolute(element, point) {
   element.style.left = `${Math.round(point.x)}px`;
   element.style.top = `${Math.round(point.y)}px`;
   return element;
 }
 
-/** Set element opacity safely. */
+/** Безопасно задаёт прозрачность элемента. */
 export function setOpacity(element, opacity) {
   element.style.opacity = opacity === 0 || opacity ? String(opacity) : '';
   return element;
 }
 
-/** Dispatch a DOM event with optional details. */
+/** Отправляет событие DOM с необязательными данными. */
 export function fireDOMEvent(element, type, data = null) {
   let event;
   try {
@@ -112,7 +113,7 @@ export function fireDOMEvent(element, type, data = null) {
   return event;
 }
 
-/** Register a DOM listener and return an unsubscribe function. */
+/** Регистрирует обработчик DOM и возвращает функцию отписки. */
 export function on(element, types, handler, options = false) {
   for (const type of types.split(/\s+/).filter(Boolean)) {
     element.addEventListener(type, handler, options);
@@ -120,7 +121,7 @@ export function on(element, types, handler, options = false) {
   return () => off(element, types, handler, options);
 }
 
-/** Unregister a DOM listener. */
+/** Удаляет обработчик DOM. */
 export function off(element, types, handler, options = false) {
   for (const type of types.split(/\s+/).filter(Boolean)) {
     element.removeEventListener(type, handler, options);
@@ -143,8 +144,8 @@ export function stop(event) {
 }
 
 /**
- * Resolve pointer coordinates relative to a container, accounting for
- * borders and scroll offsets.
+ * Вычисляет координаты указателя относительно контейнера с учётом границ
+ * и смещений прокрутки.
  * @returns {{x:number,y:number}}
  */
 export function getMousePosition(event, container) {
@@ -158,29 +159,29 @@ export function getMousePosition(event, container) {
   };
 }
 
-/** Normalize wheel delta across browsers and trackpads. */
+/** Нормализует дельту колеса для разных браузеров и тачпадов. */
 export function getWheelDelta(event) {
   if (event.deltaMode === 1) return event.deltaY * 40;
   if (event.deltaMode === 2) return event.deltaY * 800;
   return event.deltaY;
 }
 
-/** Whether an event originated inside `container`. */
+/** Проверяет, возникло ли событие внутри `container`. */
 export function isInside(event, container) {
   return container.contains(event.target);
 }
 
-/** Disable native text selection while dragging. */
+/** Отключает нативное выделение текста при перетаскивании. */
 export function disableTextSelection() {
   document.documentElement.classList.add('sweety-dragging');
 }
 
-/** Restore native text selection. */
+/** Возвращает нативное выделение текста. */
 export function enableTextSelection() {
   document.documentElement.classList.remove('sweety-dragging');
 }
 
-/** Test whether a wheel event is pinch-style (ctrl+wheel on trackpads). */
+/** Проверяет, является ли событие колеса жестом масштабирования (ctrl+колесо на тачпадах). */
 export function isZoomWheelEvent(event) {
   return Boolean(event.ctrlKey || event.metaKey);
 }

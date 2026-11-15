@@ -9,7 +9,7 @@ const isLatLngLike = (value) =>
   (value !== null && typeof value === 'object' && 'lat' in value && 'lng' in value);
 
 /**
- * Normalise flexible latlng input into an array of rings.
+ * Приводит гибкий входной формат latlng к массиву колец.
  * @param {Array} latlngs
  * @returns {LatLng[][]}
  */
@@ -20,7 +20,7 @@ export function normalizeLatLngs(latlngs) {
 }
 
 /**
- * A polyline, optionally composed of multiple disconnected parts.
+ * Полилиния, при необходимости состоящая из нескольких несвязанных частей.
  */
 export class Polyline extends Path {
   /**
@@ -35,7 +35,7 @@ export class Polyline extends Path {
   }
 
   /**
-   * Replace geometry.
+   * Заменяет геометрию.
    * @param {Array} latlngs
    * @returns {this}
    */
@@ -51,7 +51,7 @@ export class Polyline extends Path {
   }
 
   /**
-   * Append a point to a ring.
+   * Добавляет точку в кольцо.
    * @param {LatLng|number[]} latlng
    * @param {number} [ring=0]
    * @returns {this}
@@ -73,7 +73,7 @@ export class Polyline extends Path {
   }
 
   /**
-   * GeoJSON geometry for this path.
+   * Геометрия GeoJSON для этого path.
    * @returns {object}
    */
   toGeoJSON() {

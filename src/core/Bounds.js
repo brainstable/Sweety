@@ -2,13 +2,13 @@ import { LatLng } from './LatLng.js';
 import { Point } from './Point.js';
 
 /**
- * Axis-aligned geographic bounds. Corners are always normalised so that
- * `_southWest` is south-west of `_northEast`.
+ * Географические границы, выровненные по осям. Углы всегда нормализованы так,
+ * что `_southWest` находится юго-западнее `_northEast`.
  */
 export class Bounds {
   /**
-   * Accepts `(corner1, corner2)`, `[[lat,lng], [lat,lng]]`, a single
-   * `[lat,lng]`, or another Bounds instance.
+   * Принимает `(corner1, corner2)`, `[[lat,lng], [lat,lng]]`, одну пару
+   * `[lat,lng]` или другой экземпляр Bounds.
    * @param {*} [corner1]
    * @param {*} [corner2]
    */
@@ -38,7 +38,7 @@ export class Bounds {
   }
 
   /**
-   * Expand bounds to include a coordinate or another bounds object.
+   * Расширяет границы, включая в них координату или другой объект границ.
    * @param {LatLng|number[]|{lat:number,lng:number}|Bounds} object
    * @returns {Bounds} this
    */
@@ -104,7 +104,7 @@ export class Bounds {
     return this._northEast ? this._northEast.lat : null;
   }
 
-  /** @returns {LatLng|null} centre of the box */
+  /** @returns {LatLng|null} центр прямоугольника */
   getCenter() {
     if (!this.isValid()) return null;
     return new LatLng(
@@ -113,7 +113,7 @@ export class Bounds {
     );
   }
 
-  /** @returns {Point|null} width and height in coordinate units */
+  /** @returns {Point|null} ширина и высота в единицах координат */
   getSize() {
     if (!this.isValid()) return null;
     return new Point(
@@ -122,7 +122,7 @@ export class Bounds {
     );
   }
 
-  /** Expand by a ratio of the current size on each side. */
+  /** Расширяет границы на долю текущего размера с каждой стороны. */
   pad(bufferRatio) {
     if (!this.isValid()) return this;
     const latPadding = Math.abs(this._northEast.lat - this._southWest.lat) * bufferRatio;
@@ -134,7 +134,7 @@ export class Bounds {
     return this;
   }
 
-  /** Whether a coordinate or nested bounds lies entirely inside this box. */
+  /** Проверяет, целиком ли координата или вложенные границы лежат внутри этого прямоугольника. */
   contains(object) {
     if (!this.isValid()) return false;
     if (object instanceof Bounds) {
@@ -155,7 +155,7 @@ export class Bounds {
     );
   }
 
-  /** Whether a coordinate or bounds intersects this box. */
+  /** Проверяет, пересекаются ли координата или границы с этим прямоугольником. */
   intersects(object) {
     if (!this.isValid()) return false;
     if (object instanceof Bounds) {
@@ -176,7 +176,7 @@ export class Bounds {
     );
   }
 
-  /** Strict overlap test (edges touching are not an overlap). */
+  /** Строгая проверка перекрытия: соприкосновение краёв перекрытием не считается. */
   overlaps(other) {
     if (!(other instanceof Bounds) || !this.isValid() || !other.isValid()) return false;
     const sw = other.getSouthWest();
@@ -186,17 +186,17 @@ export class Bounds {
     return latOverlaps && lngOverlaps;
   }
 
-  /** @returns {Bounds} an independent copy */
+  /** @returns {Bounds} независимая копия */
   clone() {
     return new Bounds(this);
   }
 
-  /** Whether both corners are set. */
+  /** Проверяет, заданы ли оба угла. */
   isValid() {
     return Boolean(this._southWest && this._northEast);
   }
 
-  /** Approximate equality within a tolerance. */
+  /** Приблизительное равенство в пределах допуска. */
   equals(other, maxMargin = 1e-9) {
     if (!(other instanceof Bounds)) return false;
     if (!this.isValid() || !other.isValid()) return this.isValid() === other.isValid();
@@ -206,7 +206,7 @@ export class Bounds {
     );
   }
 
-  /** Clamp a coordinate to the nearest point inside the bounds. */
+  /** Прижимает координату к ближайшей точке внутри границ. */
   clamp(latlng) {
     if (!this.isValid()) return new LatLng(latlng);
     const source = latlng instanceof LatLng ? latlng : new LatLng(latlng);
@@ -217,7 +217,7 @@ export class Bounds {
     );
   }
 
-  /** @returns {string} `west,south,east,north` with six decimals */
+  /** @returns {string} `west,south,east,north` с шестью знаками после запятой */
   toBBoxString() {
     if (!this.isValid()) return '';
     return [this.getWest(), this.getSouth(), this.getEast(), this.getNorth()]
@@ -231,7 +231,7 @@ export class Bounds {
   }
 }
 
-/** Factory for {@link Bounds}. */
+/** Фабрика для {@link Bounds}. */
 export function toBounds(corner1, corner2) {
   return corner1 instanceof Bounds ? corner1 : new Bounds(corner1, corner2);
 }

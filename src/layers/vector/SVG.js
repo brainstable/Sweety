@@ -2,8 +2,8 @@ import { Renderer } from './Renderer.js';
 import { addClass, createNS, getMousePosition, on, preventDefault } from '../../util/dom.js';
 
 /**
- * SVG renderer. One `<svg>` is shared by every path layer added to the map.
- * Interactive paths receive pointer events independently of the map.
+ * Рендерер SVG. Один `<svg>` используется совместно всеми слоями path, добавленными на карту.
+ * Интерактивные path получают события указателя независимо от карты.
  */
 export class SVG extends Renderer {
   /** @private */

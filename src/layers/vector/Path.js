@@ -4,7 +4,7 @@ import { toLatLng } from '../../core/LatLng.js';
 import { Point } from '../../core/Point.js';
 import { extend } from '../../util/index.js';
 
-/** Shared vector styling defaults. */
+/** Общие стилевые значения по умолчанию для векторных слоёв. */
 export const PATH_DEFAULTS = {
   stroke: true,
   color: '#2f6fed',
@@ -25,8 +25,8 @@ export const PATH_DEFAULTS = {
 };
 
 /**
- * Abstract vector path. Subclasses provide `_latlngs` or override
- * {@link _project}; the renderer owns the actual SVG/Canvas node.
+ * Абстрактный векторный path. Подклассы задают `_latlngs` или переопределяют
+ * {@link _project}; сам узел SVG/Canvas принадлежит рендереру.
  */
 export class Path extends Layer {
   /**
@@ -59,7 +59,7 @@ export class Path extends Layer {
   }
 
   /**
-   * Recompute screen geometry.
+   * Пересчитывает экранную геометрию.
    * @private
    */
   _update() {
@@ -69,7 +69,7 @@ export class Path extends Layer {
   }
 
   /**
-   * Project every ring to layer pixels.
+   * Проецирует каждое кольцо в пиксели слоя.
    * @returns {Point[][]}
    * @protected
    */
@@ -79,7 +79,7 @@ export class Path extends Layer {
   }
 
   /**
-   * Update the SVG path data and style.
+   * Обновляет данные path в SVG и его стиль.
    * @protected
    */
   _updateSVGPath() {
@@ -133,7 +133,7 @@ export class Path extends Layer {
   }
 
   /**
-   * Merge new style values.
+   * Объединяет текущие стили с новыми значениями.
    * @param {object} style
    * @returns {this}
    */
@@ -158,7 +158,7 @@ export class Path extends Layer {
   }
 
   /**
-   * Bounds of the path.
+   * Границы path.
    * @returns {Bounds}
    */
   getBounds() {
@@ -187,8 +187,9 @@ export class Path extends Layer {
   }
 
   /**
-   * Whether a container-space point hits the painted path. Filled closed
-   * shapes test their interior (even-odd); all shapes test stroke distance.
+   * Проверяет, попадает ли точка в координатах контейнера в отрисованный path. Замкнутые
+   * фигуры с заливкой проверяют внутреннюю область (even-odd); все фигуры проверяют
+   * расстояние до обводки.
    * @param {Point|{x:number,y:number}} point
    * @returns {boolean}
    */
@@ -212,7 +213,7 @@ export class Path extends Layer {
   }
 
   /**
-   * Raise a path click event on the map and feature group.
+   * Порождает событие клика по path на карте и в группе объектов.
    * @param {MouseEvent} event
    * @returns {this}
    */
