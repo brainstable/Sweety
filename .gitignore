@@ -37,3 +37,6 @@ Thumbs.db
 # Local tooling
 .eslintcache
 .prettiercache
+
+# Local scratch files
+tmp/

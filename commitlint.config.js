@@ -28,6 +28,7 @@ export default {
         'types',
         'styles',
         'docs',
+        'readme',
         'demo',
         'logo',
         'build',

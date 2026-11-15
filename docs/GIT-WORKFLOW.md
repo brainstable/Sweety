@@ -91,7 +91,7 @@ develop ────●──●──●──●──●──●──●─
 
 Scope: `core`, `layers`, `tiles`, `markers`, `popup`, `vector`, `geojson`,
 `controls`, `projection`, `events`, `utils`, `renderer`, `plugins`, `styles`,
-`docs`, `demo`, `build`, `ci`, `release`, `deps`.
+`docs`, `readme`, `demo`, `logo`, `build`, `ci`, `release`, `deps`.
 
 Примеры:
 
