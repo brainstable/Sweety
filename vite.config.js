@@ -16,8 +16,13 @@ export default defineConfig({
       cssFileName: 'sweety',
     },
     sourcemap: true,
-    minify: 'esbuild',
+    minify: 'oxc',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        exports: 'named',
+      },
+    },
   },
   test: {
     environment: 'jsdom',

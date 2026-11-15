@@ -7,7 +7,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ['**/*.js'],
+    files: ['**/*.{js,mjs}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -17,6 +17,9 @@ export default [
         __SWEETY_VERSION__: 'readonly',
         mockElementSize: 'readonly',
         ResizeObserverMock: 'readonly',
+        URL: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
       },
     },
     rules: {
@@ -24,6 +27,12 @@ export default [
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'always'],
       'prefer-const': 'error',
+    },
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ];
