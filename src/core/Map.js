@@ -24,6 +24,7 @@ import {
 import {
   cancelAnimFrame,
   clamp,
+  easeInOutCubic,
   easeOutCubic,
   extend,
   isObject,
@@ -169,6 +170,7 @@ export class Map extends Evented {
     this._zoomAnimFrame = null;
     this._panFrame = null;
     this._panEnd = null;
+    this._flyFrame = null;
 
     this._initLayout();
     this._initEvents();
@@ -436,6 +438,10 @@ export class Map extends Evented {
       cancelAnimFrame(this._panFrame);
       this._panFrame = null;
     }
+    if (this._flyFrame) {
+      cancelAnimFrame(this._flyFrame);
+      this._flyFrame = null;
+    }
     if (this._zoomAnimTimer) {
       clearTimeout(this._zoomAnimTimer);
       this._zoomAnimTimer = null;
@@ -492,6 +498,7 @@ export class Map extends Evented {
    * @returns {this}
    */
   setView(center, zoom = this._zoom, options = {}) {
+    if (this._flyFrame) this._cancelFlyTo();
     if (this._animatingZoom) this._finishZoomAnimation();
     if (this._panFrame && !options.animate) this._cancelPanAnimation();
 
@@ -915,20 +922,133 @@ export class Map extends Evented {
   }
 
   /**
-   * Keep a coordinate inside the viewport, padding the result.
-   * @param {LatLng|number[]} latlng
-   * @param {number[]|Point} [padding=[0,0]]
+   * Pan the map minimally so the whole viewport stays inside bounds.
+   * @param {Bounds|number[][]} bounds
+   * @param {object} [options]
    * @returns {this}
    */
-  panInsideBounds(latlng, padding = [0, 0]) {
-    const target = toLatLng(latlng);
-    const limited = this._limitCenter(target, this._zoom, this.options.maxBounds);
-    if (limited.equals(target)) return this;
+  panInsideBounds(bounds, options = {}) {
+    const target = bounds instanceof Bounds ? bounds : new Bounds(bounds);
+    if (!target.isValid()) throw new Error('panInsideBounds requires valid bounds');
+    const center = this._limitCenter(this._center, this._zoom, target);
+    if (center.equals(this._center)) return this;
+    return this.panTo(center, { ...options, animate: options.animate ?? false });
+  }
+
+  /**
+   * Zoom level that fits bounds in the viewport.
+   * @param {Bounds|number[][]} bounds
+   * @param {boolean} [inside=false] fit the viewport inside bounds
+   * @param {number[]|Point} [padding=[0,0]]
+   * @returns {number}
+   */
+  getBoundsZoom(bounds, inside = false, padding = [0, 0]) {
+    const target = bounds instanceof Bounds ? bounds : new Bounds(bounds);
+    if (!target.isValid()) throw new Error('getBoundsZoom requires valid bounds');
+
     const paddingPoint = this._paddingToPoint(padding);
-    const point = this.latLngToContainerPoint(target);
-    point.x = clamp(point.x, paddingPoint.x, this._size.x - paddingPoint.x);
-    point.y = clamp(point.y, paddingPoint.y, this._size.y - paddingPoint.y);
-    return this.panTo(this.containerPointToLatLng(point));
+    const available = this._size.clone().subtract(paddingPoint.clone().multiplyBy(2));
+    if (available.x <= 0 || available.y <= 0) return this._limitZoom(this.getMaxZoom());
+
+    const nw = this.project(target.getNorthWest());
+    const se = this.project(target.getSouthEast());
+    const width = Math.abs(se.x - nw.x);
+    const height = Math.abs(se.y - nw.y);
+
+    if (width === 0 && height === 0) return this._limitZoom(this.getMaxZoom());
+    let scale;
+    if (width === 0) scale = available.y / height;
+    else if (height === 0) scale = available.x / width;
+    else {
+      scale = inside
+        ? Math.max(available.x / width, available.y / height)
+        : Math.min(available.x / width, available.y / height);
+    }
+    return this._limitZoom(this.getScaleZoom(scale));
+  }
+
+  /**
+   * Smoothly fly to a coordinate and zoom level. Uses a curved screen-space
+   * path and a continuous zoom interpolation rendered by the normal layer
+   * pipeline.
+   * @param {LatLng|number[]} center
+   * @param {number} [zoom=this._zoom]
+   * @param {object} [options]
+   * @param {number} [options.duration] override the computed duration
+   * @param {number} [options.curve=0.15] path curvature factor
+   * @param {boolean} [options.animate=true]
+   * @returns {this}
+   */
+  flyTo(center, zoom = this._zoom, options = {}) {
+    const target = toLatLng(center);
+    const targetZoom = this._limitZoom(Number(zoom));
+    if (!Number.isFinite(targetZoom)) throw new TypeError('flyTo requires a finite zoom');
+
+    if (options.animate === false || !this._loaded || this._size.x === 0 || this._size.y === 0) {
+      return this.setView(target, targetZoom, { animate: false });
+    }
+
+    if (this._animatingZoom) this._finishZoomAnimation();
+    if (this._panFrame) this._cancelPanAnimation();
+    if (this._flyFrame) this._cancelFlyTo();
+
+    const startCenter = this._center.clone();
+    const startZoom = this._zoom;
+    const distance = startCenter.distanceTo(target);
+    const duration = Math.max(
+      0,
+      Number(options.duration) || clamp(350 + Math.sqrt(distance) * 4, 350, 1400),
+    );
+    const startWorld = this.project(startCenter, 0);
+    const endWorld = this.project(target, 0);
+    const mid = startWorld.clone().add(endWorld).divideBy(2);
+    const dx = endWorld.x - startWorld.x;
+    const dy = endWorld.y - startWorld.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const curve = Number.isFinite(options.curve) ? Number(options.curve) : 0.15;
+    const control = mid
+      .clone()
+      .add(new Point((-dy / length) * length * curve, (dx / length) * length * curve));
+
+    const zoomChanged = Math.abs(targetZoom - startZoom) > 1e-9;
+    this._moveStart(zoomChanged);
+    this.fire('flystart', { center: startCenter, zoom: startZoom, target, targetZoom }, false);
+    const startTime = performance.now();
+    const step = () => {
+      const progress = Math.min(1, (performance.now() - startTime) / (duration || 1));
+      const t = easeInOutCubic(progress);
+      const inv = 1 - t;
+      const world = new Point(
+        inv * inv * startWorld.x + 2 * inv * t * control.x + t * t * endWorld.x,
+        inv * inv * startWorld.y + 2 * inv * t * control.y + t * t * endWorld.y,
+      );
+      const zoomNow = startZoom + (targetZoom - startZoom) * t;
+      this._resetView(this.unproject(world, 0), zoomNow, { reset: false });
+      if (progress < 1) {
+        this._flyFrame = requestAnimFrame(step);
+      } else {
+        this._flyFrame = null;
+        this._resetView(target, targetZoom, { reset: false });
+        this._moveEnd(zoomChanged);
+        this.fire('flyend', { center: target, zoom: targetZoom }, false);
+      }
+    };
+    this._flyFrame = requestAnimFrame(step);
+    return this;
+  }
+
+  /**
+   * Fly to the best view of bounds.
+   * @param {Bounds|number[][]} bounds
+   * @param {object} [options]
+   * @returns {this}
+   */
+  flyToBounds(bounds, options = {}) {
+    const target = bounds instanceof Bounds ? bounds : new Bounds(bounds);
+    if (!target.isValid()) throw new Error('flyToBounds requires valid bounds');
+    let zoom = this.getBoundsZoom(target, false, options.padding);
+    if (Number.isFinite(options.maxZoom)) zoom = Math.min(zoom, options.maxZoom);
+    return this.flyTo(target.getCenter(), this._limitZoom(zoom), options);
   }
 
   /**
@@ -943,33 +1063,24 @@ export class Map extends Evented {
   fitBounds(bounds, options = {}) {
     const target = bounds instanceof Bounds ? bounds : new Bounds(bounds);
     if (!target.isValid()) throw new Error('fitBounds requires valid bounds');
-
-    const padding = this._paddingToPoint(options.padding);
-    const available = this._size.clone().subtract(padding.clone().multiplyBy(2));
-    if (available.x <= 0 || available.y <= 0) {
-      return this.setView(target.getCenter(), this.getMaxZoom(), { animate: options.animate });
-    }
-
-    const nw = this.project(target.getNorthWest());
-    const se = this.project(target.getSouthEast());
-    const width = Math.abs(se.x - nw.x);
-    const height = Math.abs(se.y - nw.y);
-
-    let zoom;
-    if (width === 0 && height === 0) {
-      zoom = this.getMaxZoom();
-    } else if (width === 0) {
-      zoom = this.getScaleZoom(available.y / height);
-    } else if (height === 0) {
-      zoom = this.getScaleZoom(available.x / width);
-    } else {
-      zoom = this.getScaleZoom(Math.min(available.x / width, available.y / height));
-    }
-
+    let zoom = this.getBoundsZoom(target, false, options.padding);
     if (Number.isFinite(options.maxZoom)) zoom = Math.min(zoom, options.maxZoom);
     return this.setView(target.getCenter(), this._limitZoom(zoom), {
       animate: options.animate ?? false,
     });
+  }
+
+  /**
+   * Cancel an active flyTo animation.
+   * @private
+   */
+  _cancelFlyTo() {
+    if (!this._flyFrame) return;
+    cancelAnimFrame(this._flyFrame);
+    this._flyFrame = null;
+    this._zoom = this._limitZoom(this._zoom);
+    this._moveEnd(true);
+    this.fire('flyend', { center: this._center, zoom: this._zoom }, false);
   }
 
   /** @private */
