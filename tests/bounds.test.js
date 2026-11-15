@@ -29,6 +29,13 @@ describe('Point', () => {
     expect(point.equals([2, 2])).toBe(true);
     expect(point.equals(null)).toBe(false);
     expect(point.toString()).toBe('Point(2, 2)');
+
+    expect(new Point(1.9, 2.1).floor()).toMatchObject({ x: 1, y: 2 });
+    expect(new Point(1.1, 2.9).ceil()).toMatchObject({ x: 2, y: 3 });
+    expect(new Point(-1.9, 2.9).trunc()).toMatchObject({ x: -1, y: 2 });
+    expect(new Point(1, 1).contains([0, 0])).toBe(false);
+    expect(new Point(0, 0).contains([0, 0])).toBe(true);
+    expect(() => new Point('x', 0)).toThrow(TypeError);
   });
 });
 

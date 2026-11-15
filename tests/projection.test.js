@@ -112,4 +112,20 @@ describe('CRS', () => {
     ).toBe('CUSTOM');
     expect(() => resolveCRS('EPSG:9999')).toThrow('Unsupported CRS');
   });
+
+  it('validates zoom inputs and supports custom scales', () => {
+    expect(() => EPSG3857.scale(Number.NaN)).toThrow(TypeError);
+    const custom = new CRS({
+      code: 'CUSTOM',
+      projection: EPSG4326_PROJECTION,
+      transformation: new Transformation(1 / 360, 0.5, -1 / 180, 0.5),
+      scale: (zoom) => 128 * 2 ** zoom,
+    });
+    expect(custom.scale(0)).toBe(128);
+    expect(custom.latLngToPoint([0, 0], 0)).toEqual({ x: 64, y: 64 });
+    const inverse = custom.pointToLatLng({ x: 64, y: 64 }, 0);
+    expect(inverse.lat).toBeCloseTo(0, 9);
+    expect(inverse.lng).toBeCloseTo(0, 9);
+    expect(custom.projectedBounds().min.x).toBe(-180);
+  });
 });

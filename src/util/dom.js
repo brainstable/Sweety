@@ -182,7 +182,7 @@ export function enableTextSelection() {
 
 /** Test whether a wheel event is pinch-style (ctrl+wheel on trackpads). */
 export function isZoomWheelEvent(event) {
-  return event.ctrlKey || event.metaKey;
+  return Boolean(event.ctrlKey || event.metaKey);
 }
 
 export { SVG_NS };
