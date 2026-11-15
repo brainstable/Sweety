@@ -66,6 +66,42 @@ globalThis.mockElementSize = (element, width = 800, height = 600) => {
 
 globalThis.ResizeObserverMock = ResizeObserverMock;
 
+// jsdom has no canvas implementation. A recording 2D context is enough to test
+// draw order and hit testing without pulling a native canvas dependency.
+HTMLCanvasElement.prototype.getContext = function getContext(type) {
+  if (type !== '2d') return null;
+  if (!this.__ctx) {
+    const calls = [];
+    const record =
+      (name) =>
+      (...args) => {
+        calls.push({ name, args });
+      };
+    this.__ctx = {
+      canvas: this,
+      __calls: calls,
+      save: record('save'),
+      restore: record('restore'),
+      setTransform: record('setTransform'),
+      clearRect: record('clearRect'),
+      beginPath: record('beginPath'),
+      closePath: record('closePath'),
+      moveTo: record('moveTo'),
+      lineTo: record('lineTo'),
+      fill: record('fill'),
+      stroke: record('stroke'),
+      setLineDash: record('setLineDash'),
+      fillStyle: '#000',
+      strokeStyle: '#000',
+      globalAlpha: 1,
+      lineWidth: 1,
+      lineCap: 'round',
+      lineJoin: 'round',
+    };
+  }
+  return this.__ctx;
+};
+
 afterEach(() => {
   document.body.innerHTML = '';
   ResizeObserverMock.instances.length = 0;

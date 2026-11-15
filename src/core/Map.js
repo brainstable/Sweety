@@ -8,6 +8,7 @@ import { ScrollWheelZoom } from '../handlers/ScrollWheelZoom.js';
 import { DoubleClickZoom } from '../handlers/DoubleClickZoom.js';
 import { TouchZoom } from '../handlers/TouchZoom.js';
 import { SVG } from '../layers/vector/SVG.js';
+import { Canvas } from '../layers/vector/Canvas.js';
 import {
   addClass,
   create,
@@ -144,6 +145,8 @@ export class Map extends Evented {
     this._controls = [];
     /** @type {SVG|null} */
     this._svgRenderer = null;
+    /** @type {Canvas|null} */
+    this._canvasRenderer = null;
 
     this._loaded = false;
     this._size = new Point(0, 0);
@@ -301,7 +304,7 @@ export class Map extends Evented {
       target &&
       target.closest &&
       target.closest(
-        '.sweety-control, .sweety-popup, .sweety-tooltip, .sweety-marker, .sweety-svg-layer, .sweety-canvas-layer',
+        '.sweety-control, .sweety-popup, .sweety-tooltip, .sweety-marker, .sweety-svg-layer',
       )
     ) {
       return;
@@ -429,6 +432,7 @@ export class Map extends Evented {
     this._container._sweetyMap = null;
     this._loaded = false;
     this._svgRenderer = null;
+    this._canvasRenderer = null;
     return this;
   }
 
@@ -1034,7 +1038,11 @@ export class Map extends Evented {
       if (!renderer._map) this.addLayer(renderer);
       return renderer;
     }
-    if (this.options.preferCanvas && this._canvasRenderer) {
+    if (this.options.preferCanvas) {
+      if (!this._canvasRenderer) {
+        this._canvasRenderer = new Canvas();
+        this.addLayer(this._canvasRenderer);
+      }
       return this._canvasRenderer;
     }
     if (!this._svgRenderer) {

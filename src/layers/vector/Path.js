@@ -63,7 +63,7 @@ export class Path extends Layer {
    * @private
    */
   _update() {
-    if (!this._map || !this._renderer || !this._path) return;
+    if (!this._map || !this._renderer) return;
     this._parts = this._project();
     this._renderer._updatePath(this);
   }
@@ -187,6 +187,31 @@ export class Path extends Layer {
   }
 
   /**
+   * Whether a container-space point hits the painted path. Filled closed
+   * shapes test their interior (even-odd); all shapes test stroke distance.
+   * @param {Point|{x:number,y:number}} point
+   * @returns {boolean}
+   */
+  _containsPoint(point) {
+    if (!this._parts || !this._parts.length) return false;
+    const target = point instanceof Point ? point : new Point(point);
+    const tolerance = (Number(this.options.weight) || 0) / 2 + 3;
+    let inside = false;
+
+    for (const ring of this._parts) {
+      if (ring.length === 1 && target.distanceTo(ring[0]) <= tolerance) return true;
+      for (let i = 0; i < ring.length - 1; i += 1) {
+        if (distanceToSegment(target, ring[i], ring[i + 1]) <= tolerance) return true;
+      }
+      if (this._closed && ring.length > 2) {
+        if (distanceToSegment(target, ring[ring.length - 1], ring[0]) <= tolerance) return true;
+        if (pointInRing(target, ring)) inside = !inside;
+      }
+    }
+    return Boolean(this._closed && this.options.fill && inside);
+  }
+
+  /**
    * Raise a path click event on the map and feature group.
    * @param {MouseEvent} event
    * @returns {this}
@@ -218,3 +243,33 @@ export class Path extends Layer {
 }
 
 export { Point };
+
+/** @private */
+function pointInRing(point, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const xi = ring[i].x;
+    const yi = ring[i].y;
+    const xj = ring[j].x;
+    const yj = ring[j].y;
+    const intersects =
+      yi > point.y !== yj > point.y &&
+      point.x < ((xj - xi) * (point.y - yi)) / (yj - yi || Number.EPSILON) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+/** @private */
+function distanceToSegment(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  if (dx === 0 && dy === 0) return point.distanceTo(start);
+  const t = Math.max(
+    0,
+    Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx * dx + dy * dy)),
+  );
+  const x = start.x + t * dx;
+  const y = start.y + t * dy;
+  return Math.hypot(point.x - x, point.y - y);
+}
