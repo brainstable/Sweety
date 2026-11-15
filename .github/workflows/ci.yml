@@ -48,6 +48,9 @@ jobs:
       - name: Verify build artifacts
         run: npm run verify:build
 
+      - name: Build docs and demos site
+        run: npm run build:site
+
       - name: Check package contents
         run: npm pack --dry-run
 

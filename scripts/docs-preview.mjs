@@ -91,7 +91,7 @@ const HTML_EVENT_ATTRIBUTE_RE = /\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/g
 const HTML_JS_URL_RE = /\s(href|src)\s*=\s*(?:"|')?\s*javascript:[^"'>\s]*/gi;
 const HTML_URL_RE = /\s(src|href)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
 
-function renderHtmlBlock(block, basePath) {
+function renderHtmlBlock(block, state) {
   const cleaned = block
     .replace(HTML_UNSAFE_TAGS_RE, '')
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -101,7 +101,7 @@ function renderHtmlBlock(block, basePath) {
   return cleaned.replace(HTML_URL_RE, (match, attribute, doubleQuoted, singleQuoted) => {
     const value = doubleQuoted ?? singleQuoted ?? '';
     const quote = doubleQuoted === undefined ? "'" : '"';
-    return ` ${attribute}=${quote}${resolveHref(value, basePath)}${quote}`;
+    return ` ${attribute}=${quote}${resolveHref(value, state)}${quote}`;
   });
 }
 
@@ -123,16 +123,17 @@ function uniqueSlug(value, state) {
   return count === 0 ? base : `${base}-${count + 1}`;
 }
 
-function resolveHref(href, basePath) {
+function resolveHref(href, state) {
   if (!href || href.startsWith('#')) return href;
   if (/^\s*(?:javascript|data|vbscript):/i.test(href)) return '#';
   if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('//')) return href;
 
   try {
-    const base = new URL(basePath, 'http://sweety.local');
+    const base = new URL(state.basePath, 'http://sweety.local');
     const target = new URL(href, base);
     if (target.origin !== base.origin) return href;
-    return `${target.pathname}${target.search}${target.hash}`;
+    const path = `${target.pathname}${target.search}${target.hash}`;
+    return state.mapHref ? state.mapHref(path) : path;
   } catch {
     return href;
   }
@@ -147,7 +148,7 @@ function stripInline(value) {
     .trim();
 }
 
-function renderInline(value, basePath, _state) {
+function renderInline(value, state) {
   const codeSpans = [];
   let output = value.replace(/`([^`]+)`/g, (_, code) => {
     codeSpans.push(`<code>${escapeHtml(code)}</code>`);
@@ -157,12 +158,12 @@ function renderInline(value, basePath, _state) {
   output = escapeHtml(output);
 
   output = output.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_, alt, src) => {
-    const url = resolveHref(src, basePath);
+    const url = resolveHref(src, state);
     return `<img src="${url}" alt="${alt}" loading="lazy" decoding="async">`;
   });
 
   output = output.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) => {
-    const url = resolveHref(href, basePath);
+    const url = resolveHref(href, state);
     const external = /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//');
     const attributes = external ? ' target="_blank" rel="noreferrer"' : '';
     return `<a href="${url}"${attributes}>${label}</a>`;
@@ -226,7 +227,7 @@ function isBlockStart(line, lines, index) {
   return line.includes('|') && isTableSeparator(next);
 }
 
-function parseList(lines, start, basePath, state) {
+function parseList(lines, start, state) {
   const first = lines[start].match(LIST_RE);
   const baseIndent = first[1].length;
   const ordered = /^\d/.test(first[2]);
@@ -287,7 +288,7 @@ function parseList(lines, start, basePath, state) {
   const startAttribute = ordered && startNumber !== 1 ? ` start="${startNumber}"` : '';
   const itemsHtml = items
     .map((itemLines) => {
-      let inner = renderBlocks(itemLines, basePath, state);
+      let inner = renderBlocks(itemLines, state);
       const firstParagraph = inner.match(/^<p>([\s\S]*?)<\/p>/);
 
       if (firstParagraph) {
@@ -304,7 +305,7 @@ function parseList(lines, start, basePath, state) {
   };
 }
 
-function renderBlocks(lines, basePath, state) {
+function renderBlocks(lines, state) {
   let html = '';
   let index = 0;
 
@@ -341,7 +342,7 @@ function renderBlocks(lines, basePath, state) {
         index += 1;
       }
 
-      html += renderHtmlBlock(block.join('\n'), basePath);
+      html += renderHtmlBlock(block.join('\n'), state);
       continue;
     }
 
@@ -350,7 +351,7 @@ function renderBlocks(lines, basePath, state) {
       const level = heading[1].length;
       const text = heading[2].replace(/\s+#+\s*$/, '');
       const id = uniqueSlug(stripInline(text), state);
-      html += `<h${level} id="${id}">${renderInline(text, basePath, state)}<a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a></h${level}>`;
+      html += `<h${level} id="${id}">${renderInline(text, state)}<a class="anchor" href="#${id}" aria-hidden="true" tabindex="-1">#</a></h${level}>`;
       index += 1;
       continue;
     }
@@ -382,7 +383,7 @@ function renderBlocks(lines, basePath, state) {
       const head = header
         .map(
           (cell, cellIndex) =>
-            `<th${alignmentAttribute(alignments[cellIndex])}>${renderInline(cell, basePath, state)}</th>`,
+            `<th${alignmentAttribute(alignments[cellIndex])}>${renderInline(cell, state)}</th>`,
         )
         .join('');
       const body = rows
@@ -393,7 +394,6 @@ function renderBlocks(lines, basePath, state) {
                 (_, cellIndex) =>
                   `<td${alignmentAttribute(alignments[cellIndex])}>${renderInline(
                     row[cellIndex] ?? '',
-                    basePath,
                     state,
                   )}</td>`,
               )
@@ -415,12 +415,12 @@ function renderBlocks(lines, basePath, state) {
         index += 1;
       }
 
-      html += `<blockquote>${renderBlocks(quoteLines, basePath, state)}</blockquote>`;
+      html += `<blockquote>${renderBlocks(quoteLines, state)}</blockquote>`;
       continue;
     }
 
     if (LIST_RE.test(line)) {
-      const list = parseList(lines, index, basePath, state);
+      const list = parseList(lines, index, state);
       html += list.html;
       index = list.next;
       continue;
@@ -436,27 +436,44 @@ function renderBlocks(lines, basePath, state) {
       index += 1;
     }
 
-    html += `<p>${renderInline(paragraph.join(' '), basePath, state)}</p>`;
+    html += `<p>${renderInline(paragraph.join(' '), state)}</p>`;
   }
 
   return html;
 }
 
-export function renderMarkdown(markdown, { basePath = '/README.md' } = {}) {
-  const state = { headingIds: new Map() };
-  return renderBlocks(markdown.replace(/\r\n?/g, '\n').split('\n'), basePath, state);
+export function renderMarkdown(markdown, { basePath = '/README.md', mapHref } = {}) {
+  const state = { headingIds: new Map(), basePath, mapHref: mapHref ?? null };
+  return renderBlocks(markdown.replace(/\r\n?/g, '\n').split('\n'), state);
 }
 
-function renderPage(doc, body, version) {
+// Базовый путь сайта всегда с завершающим слэшем: '/' для корня домена и
+// '/Sweety/' для страницы проекта на GitHub Pages.
+export function normalizeBase(base) {
+  const normalized = String(base ?? '/')
+    .trim()
+    .replace(/\/{2,}/g, '/');
+  if (!normalized.startsWith('/')) return `/${normalized.replace(/\/$/, '')}/`;
+  return normalized.endsWith('/') ? normalized : `${normalized}/`;
+}
+
+function withBase(base, path) {
+  return `${base}${path.replace(/^\/+/, '')}`;
+}
+
+export function renderPage(doc, body, version, options = {}) {
+  const base = normalizeBase(options.base);
+  const mapHref =
+    options.mapHref ?? ((path) => (path.startsWith('/') ? withBase(base, path) : path));
   const pageTitle =
     doc.id === 'overview' ? 'Документация Sweety' : `${doc.title} — документация Sweety`;
   const navigation = DOC_NAV.map((item) => {
     const active = item.id === doc.id ? ' class="active" aria-current="page"' : '';
-    return `<a href="${item.href}"${active}>${item.title}</a>`;
+    return `<a href="${mapHref(item.href)}"${active}>${item.title}</a>`;
   }).join('');
   const demoNavigation = DEMO_NAV.map(
     (item) =>
-      `<a href="${item.href}" target="_blank" rel="noreferrer"><span>${escapeHtml(
+      `<a href="${mapHref(item.href)}" target="_blank" rel="noreferrer"><span>${escapeHtml(
         item.title,
       )}</span><small>${escapeHtml(item.note)}</small></a>`,
   ).join('');
@@ -467,16 +484,16 @@ function renderPage(doc, body, version) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <link rel="icon" href="/assets/brand/favicon.svg" type="image/svg+xml">
-    <link rel="alternate icon" href="/assets/brand/favicon.ico" sizes="16x16 32x32">
+    <link rel="icon" href="${mapHref('/assets/brand/favicon.svg')}" type="image/svg+xml">
+    <link rel="alternate icon" href="${mapHref('/assets/brand/favicon.ico')}" sizes="16x16 32x32">
     <title>${escapeHtml(pageTitle)}</title>
     <style>${PAGE_STYLES}</style>
   </head>
   <body>
     <div class="layout">
       <aside class="sidebar">
-        <a class="brand" href="/docs/">
-          <img class="brand-mark" src="/assets/brand/sweety-mark.svg" alt="" width="44" height="44" aria-hidden="true">
+        <a class="brand" href="${mapHref('/docs/')}">
+          <img class="brand-mark" src="${mapHref('/assets/brand/sweety-mark.svg')}" alt="" width="44" height="44" aria-hidden="true">
           <span class="brand-text"><strong>Sweety</strong><small>интерактивные карты</small></span>
         </a>
         <nav class="nav" aria-label="Документация">${navigation}</nav>
@@ -492,7 +509,7 @@ function renderPage(doc, body, version) {
           <article class="markdown">${body}</article>
           <footer class="doc-footer">
             <span>Sweety v${escapeHtml(version)} · MIT</span>
-            <a href="/examples/">Открыть демо →</a>
+            <a href="${mapHref('/examples/')}">Открыть демо →</a>
           </footer>
         </div>
       </main>
