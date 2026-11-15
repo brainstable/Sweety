@@ -1,0 +1,315 @@
+/* ==========================================================================
+   Sweety map-edit-plugin
+   Все классы имеют префикс .map-edit-, поэтому не конфликтуют с ядром.
+   ========================================================================== */
+
+.map-edit-plugin {
+  --map-edit-control-bg: rgba(255, 255, 255, 0.96);
+  --map-edit-control-border: rgba(15, 23, 42, 0.14);
+  --map-edit-control-color: #1f2937;
+  --map-edit-control-muted: #6b7280;
+  --map-edit-control-hover: rgba(15, 23, 42, 0.08);
+  --map-edit-control-active: #2f6fed;
+  --map-edit-control-active-color: #ffffff;
+  --map-edit-control-radius: 9px;
+  --map-edit-control-shadow: 0 4px 18px rgba(15, 23, 42, 0.16);
+  --map-edit-selected-stroke: #f59e0b;
+  --map-edit-selected-weight: 4;
+  --map-edit-selected-glow: rgba(245, 158, 11, 0.55);
+  --map-edit-ghost-opacity: 0.65;
+  --map-edit-stroke: #2f6fed;
+  --map-edit-fill: rgba(47, 111, 237, 0.15);
+  --map-edit-handle-color: #ffffff;
+  --map-edit-handle-stroke: #1f2937;
+  --map-edit-midpoint-color: #93c5fd;
+}
+
+/* Панель инструментов */
+
+.map-edit-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--map-edit-control-border);
+  border-radius: var(--map-edit-control-radius);
+  background: var(--map-edit-control-bg);
+  color: var(--map-edit-control-color);
+  box-shadow: var(--map-edit-control-shadow);
+  backdrop-filter: blur(8px);
+}
+
+.map-edit-control .map-edit-button,
+.map-edit-draw-toolbar .map-edit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
+}
+
+.map-edit-control .map-edit-button:hover:not(:disabled),
+.map-edit-draw-toolbar .map-edit-button:hover:not(:disabled) {
+  background: var(--map-edit-control-hover);
+}
+
+.map-edit-control .map-edit-button.is-active,
+.map-edit-draw-toolbar .map-edit-button.is-active {
+  background: var(--map-edit-control-active);
+  color: var(--map-edit-control-active-color);
+}
+
+.map-edit-control .map-edit-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.map-edit-control .map-edit-button:focus-visible,
+.map-edit-draw-toolbar .map-edit-button:focus-visible {
+  outline: 2px solid var(--map-edit-control-active);
+  outline-offset: 1px;
+}
+
+.map-edit-control .map-edit-icon,
+.map-edit-draw-toolbar .map-edit-icon {
+  pointer-events: none;
+}
+
+.map-edit-separator {
+  width: 1px;
+  height: 22px;
+  margin: 0 3px;
+  background: var(--map-edit-control-border);
+}
+
+/* Подсказка и панель рисования */
+
+.map-edit-draw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(520px, calc(100vw - 48px));
+  padding: 7px 9px 7px 12px;
+  border: 1px solid var(--map-edit-control-border);
+  border-radius: var(--map-edit-control-radius);
+  background: var(--map-edit-control-bg);
+  color: var(--map-edit-control-color);
+  box-shadow: var(--map-edit-control-shadow);
+  backdrop-filter: blur(8px);
+}
+
+.map-edit-draw-hint {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--map-edit-control-muted);
+}
+
+.map-edit-draw-actions {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.map-edit-draw-toolbar .map-edit-button-primary {
+  color: var(--map-edit-control-active);
+}
+
+.map-edit-draw-toolbar .map-edit-button-primary:hover:not(:disabled) {
+  background: var(--map-edit-control-active);
+  color: var(--map-edit-control-active-color);
+}
+
+/* Вершины и середины сегментов */
+
+.map-edit-handles {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.map-edit-handle {
+  fill: var(--map-edit-handle-color, #ffffff);
+  stroke: var(--map-edit-handle-stroke, #1f2937);
+  stroke-width: 1.5;
+  pointer-events: all;
+  cursor: grab;
+  transition: fill 100ms ease;
+}
+
+.map-edit-handle:hover {
+  fill: #e0f2fe;
+}
+
+.map-edit-handle:active {
+  cursor: grabbing;
+}
+
+.map-edit-handle-vertex,
+.map-edit-handle-corner,
+.map-edit-handle-center,
+.map-edit-handle-radius {
+  fill: var(--map-edit-handle-color, #ffffff);
+}
+
+.map-edit-handle-radius {
+  fill: var(--map-edit-midpoint-color, #93c5fd);
+}
+
+.map-edit-handle-midpoint {
+  fill: var(--map-edit-midpoint-color, #93c5fd);
+  stroke: var(--map-edit-handle-stroke, #1f2937);
+  stroke-width: 1;
+  opacity: 0.95;
+  cursor: copy;
+}
+
+.map-edit-handle-midpoint:hover {
+  fill: #60a5fa;
+  opacity: 1;
+}
+
+/* Подсветка выбранного объекта. Класс ставится на исходный path/маркер,
+   стили слоя при этом не перезаписываются. */
+
+.sweety-path.map-edit-selected {
+  stroke: var(--map-edit-selected-stroke, #f59e0b) !important;
+  stroke-width: var(--map-edit-selected-weight, 4) !important;
+  filter: drop-shadow(0 0 3px var(--map-edit-selected-glow, rgba(245, 158, 11, 0.55)));
+}
+
+.sweety-marker.map-edit-selected .sweety-marker-icon-img,
+.sweety-marker.map-edit-selected .sweety-div-icon {
+  filter: drop-shadow(0 0 5px var(--map-edit-selected-glow, rgba(245, 158, 11, 0.55)));
+}
+
+.map-edit-body-target {
+  cursor: move;
+}
+
+/* Ghost-слой */
+
+.map-edit-ghost-path {
+  fill: var(--map-edit-fill, rgba(47, 111, 237, 0.15));
+  fill-opacity: 1;
+  stroke: var(--map-edit-stroke, #2f6fed);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  stroke-linejoin: round;
+  opacity: var(--map-edit-ghost-opacity, 0.65);
+  pointer-events: none;
+}
+
+.map-edit-ghost-line {
+  fill: none;
+  stroke: var(--map-edit-stroke, #2f6fed);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: var(--map-edit-ghost-opacity, 0.65);
+  pointer-events: none;
+}
+
+.map-edit-ghost-vertex {
+  fill: var(--map-edit-handle-color, #ffffff);
+  stroke: var(--map-edit-stroke, #2f6fed);
+  stroke-width: 1.5;
+  opacity: var(--map-edit-ghost-opacity, 0.65);
+}
+
+.map-edit-ghost-cursor {
+  fill: var(--map-edit-stroke, #2f6fed);
+  fill-opacity: 0.35;
+  stroke: var(--map-edit-stroke, #2f6fed);
+  stroke-width: 1.5;
+}
+
+.map-edit-ghost-marker {
+  fill: var(--map-edit-stroke, #2f6fed);
+  fill-opacity: 0.4;
+  stroke: var(--map-edit-stroke, #2f6fed);
+  stroke-width: 2;
+  opacity: var(--map-edit-ghost-opacity, 0.65);
+}
+
+.map-edit-ghost-circle {
+  fill: var(--map-edit-fill, rgba(47, 111, 237, 0.15));
+  stroke: var(--map-edit-stroke, #2f6fed);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  opacity: var(--map-edit-ghost-opacity, 0.65);
+}
+
+/* Тёмная тема: явная или системная */
+
+[data-map-edit-theme='dark'] {
+  --map-edit-control-bg: rgba(15, 23, 42, 0.94);
+  --map-edit-control-border: rgba(148, 163, 184, 0.28);
+  --map-edit-control-color: #e2e8f0;
+  --map-edit-control-muted: #94a3b8;
+  --map-edit-control-hover: rgba(148, 163, 184, 0.16);
+  --map-edit-control-active: #38bdf8;
+  --map-edit-control-active-color: #0f172a;
+  --map-edit-handle-color: #0f172a;
+  --map-edit-handle-stroke: #e2e8f0;
+  --map-edit-midpoint-color: #38bdf8;
+  --map-edit-selected-stroke: #fbbf24;
+  --map-edit-selected-glow: rgba(251, 191, 36, 0.5);
+  --map-edit-stroke: #38bdf8;
+  --map-edit-fill: rgba(56, 189, 248, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-edit-plugin:not([data-map-edit-theme='light']) {
+    --map-edit-control-bg: rgba(15, 23, 42, 0.94);
+    --map-edit-control-border: rgba(148, 163, 184, 0.28);
+    --map-edit-control-color: #e2e8f0;
+    --map-edit-control-muted: #94a3b8;
+    --map-edit-control-hover: rgba(148, 163, 184, 0.16);
+    --map-edit-control-active: #38bdf8;
+    --map-edit-control-active-color: #0f172a;
+    --map-edit-handle-color: #0f172a;
+    --map-edit-handle-stroke: #e2e8f0;
+    --map-edit-midpoint-color: #38bdf8;
+    --map-edit-selected-stroke: #fbbf24;
+    --map-edit-selected-glow: rgba(251, 191, 36, 0.5);
+    --map-edit-stroke: #38bdf8;
+    --map-edit-fill: rgba(56, 189, 248, 0.16);
+  }
+}
+
+/* Мобильные устройства: увеличенные зоны касания */
+
+@media (pointer: coarse) {
+  .map-edit-control .map-edit-button,
+  .map-edit-draw-toolbar .map-edit-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .map-edit-handle {
+    stroke-width: 2;
+  }
+
+  .map-edit-draw-hint {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-edit-control .map-edit-button,
+  .map-edit-draw-toolbar .map-edit-button,
+  .map-edit-handle {
+    transition: none;
+  }
+}
