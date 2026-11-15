@@ -15,6 +15,8 @@ export default [
         ...globals.browser,
         ...globals.node,
         __SWEETY_VERSION__: 'readonly',
+        mockElementSize: 'readonly',
+        ResizeObserverMock: 'readonly',
       },
     },
     rules: {
