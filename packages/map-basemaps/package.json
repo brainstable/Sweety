@@ -38,9 +38,6 @@
     "README.md",
     "LICENSE"
   ],
-  "sideEffects": [
-    "**/*.css"
-  ],
   "keywords": [
     "sweety",
     "map",
