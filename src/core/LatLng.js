@@ -51,6 +51,13 @@ export class LatLng {
   }
 
   /**
+   * @returns {LatLng} an independent copy
+   */
+  clone() {
+    return new LatLng(this.lat, this.lng, this.alt);
+  }
+
+  /**
    * Longitude wrapped into `[-180, 180)`.
    * @returns {LatLng}
    */

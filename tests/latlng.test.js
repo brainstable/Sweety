@@ -11,6 +11,8 @@ describe('LatLng', () => {
     expect(new LatLng({ lat: -10, lng: 20 })).toMatchObject({ lat: -10, lng: 20 });
     expect(new LatLng(tuple)).not.toBe(tuple);
     expect(new LatLng(tuple).equals(tuple)).toBe(true);
+    expect(tuple.clone()).not.toBe(tuple);
+    expect(tuple.clone().equals(tuple)).toBe(true);
   });
 
   it('rejects non-finite coordinates', () => {
