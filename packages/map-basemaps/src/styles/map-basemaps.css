@@ -1,0 +1,437 @@
+/* ==========================================================================
+   Sweety map-basemaps
+   Все классы имеют префикс .map-basemaps-.
+   ========================================================================== */
+
+.map-basemaps-control {
+  --map-basemaps-bg: rgba(255, 255, 255, 0.97);
+  --map-basemaps-border: rgba(15, 23, 42, 0.14);
+  --map-basemaps-color: #1f2937;
+  --map-basemaps-muted: #64748b;
+  --map-basemaps-hover: rgba(15, 23, 42, 0.07);
+  --map-basemaps-active: #2f6fed;
+  --map-basemaps-active-color: #ffffff;
+  --map-basemaps-radius: 10px;
+  --map-basemaps-shadow: 0 10px 34px rgba(15, 23, 42, 0.2);
+  --map-basemaps-thumb-size: 42px;
+  position: relative;
+  color: var(--map-basemaps-color);
+}
+
+.map-basemaps-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--map-basemaps-border);
+  border-radius: var(--map-basemaps-radius);
+  background: var(--map-basemaps-bg);
+  color: inherit;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.14);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.map-basemaps-toggle:hover {
+  background: var(--map-basemaps-hover);
+}
+
+.map-basemaps-toggle:focus-visible,
+.map-basemaps-item:focus-visible,
+.map-basemaps-key input:focus-visible,
+.map-basemaps-key button:focus-visible,
+.map-basemaps-search-input:focus-visible {
+  outline: 2px solid var(--map-basemaps-active);
+  outline-offset: 2px;
+}
+
+.map-basemaps-icon {
+  flex: none;
+}
+
+.map-basemaps-compact .map-basemaps-toggle-label {
+  display: none;
+}
+
+.map-basemaps-compact .map-basemaps-toggle {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  justify-content: center;
+}
+
+.map-basemaps-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  max-height: min(70vh, 520px);
+  padding: 8px;
+  border: 1px solid var(--map-basemaps-border);
+  border-radius: var(--map-basemaps-radius);
+  background: var(--map-basemaps-bg);
+  color: var(--map-basemaps-color);
+  box-shadow: var(--map-basemaps-shadow);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.sweety-topright .map-basemaps-panel,
+.sweety-bottomright .map-basemaps-panel {
+  right: 0;
+  left: auto;
+}
+
+.sweety-bottomleft .map-basemaps-panel,
+.sweety-bottomright .map-basemaps-panel {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+.map-basemaps-panel[hidden] {
+  display: none;
+}
+
+.map-basemaps-search {
+  flex: none;
+  padding: 2px 2px 8px;
+}
+
+.map-basemaps-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--map-basemaps-border);
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+
+.map-basemaps-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.map-basemaps-group + .map-basemaps-group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--map-basemaps-border);
+}
+
+.map-basemaps-group-title {
+  margin: 2px 6px 5px;
+  color: var(--map-basemaps-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.map-basemaps-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.map-basemaps-item:hover {
+  background: var(--map-basemaps-hover);
+}
+
+.map-basemaps-item.is-active {
+  background: color-mix(in srgb, var(--map-basemaps-active) 12%, transparent);
+}
+
+.map-basemaps-item[hidden] {
+  display: none;
+}
+
+.map-basemaps-thumb {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--map-basemaps-thumb-size);
+  height: var(--map-basemaps-thumb-size);
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 15px;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.map-basemaps-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.map-basemaps-thumb-key {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.map-basemaps-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.map-basemaps-item-name {
+  overflow: hidden;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-basemaps-item-meta {
+  color: var(--map-basemaps-muted);
+  font-size: 10px;
+}
+
+.map-basemaps-badge {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.map-basemaps-check {
+  display: inline-flex;
+  flex: none;
+  margin-left: auto;
+  color: var(--map-basemaps-active);
+}
+
+.map-basemaps-empty {
+  margin: 12px 8px;
+  color: var(--map-basemaps-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.map-basemaps-panel-preview .map-basemaps-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.map-basemaps-panel-preview .map-basemaps-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.map-basemaps-panel-preview .map-basemaps-group-title {
+  grid-column: 1 / -1;
+}
+
+.map-basemaps-panel-preview .map-basemaps-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid transparent;
+}
+
+.map-basemaps-panel-preview .map-basemaps-thumb {
+  width: 100%;
+  height: 66px;
+}
+
+.map-basemaps-panel-preview .map-basemaps-item-meta {
+  display: none;
+}
+
+.map-basemaps-panel-preview .map-basemaps-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  margin: 0;
+}
+
+.map-basemaps-panel-preview .map-basemaps-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--map-basemaps-active);
+  color: var(--map-basemaps-active-color);
+}
+
+/* Форма ключа */
+
+.map-basemaps-key {
+  flex: none;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--map-basemaps-border);
+  border-radius: 8px;
+  background: var(--map-basemaps-hover);
+}
+
+.map-basemaps-key[hidden] {
+  display: none;
+}
+
+.map-basemaps-key-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.map-basemaps-key-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--map-basemaps-border);
+  border-radius: 6px;
+  background: var(--map-basemaps-bg);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}
+
+.map-basemaps-key-hint {
+  margin: 6px 0 0;
+  color: var(--map-basemaps-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.map-basemaps-key-error {
+  margin: 6px 0 0;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.map-basemaps-key-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.map-basemaps-key-actions button {
+  flex: 1;
+  height: 30px;
+  border: 1px solid var(--map-basemaps-border);
+  border-radius: 6px;
+  background: var(--map-basemaps-bg);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.map-basemaps-key-submit {
+  border-color: var(--map-basemaps-active) !important;
+  background: var(--map-basemaps-active) !important;
+  color: var(--map-basemaps-active-color) !important;
+}
+
+.map-basemaps-key-terms {
+  display: inline-block;
+  margin-top: 7px;
+  color: var(--map-basemaps-active);
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.map-basemaps-key-terms:hover {
+  text-decoration: underline;
+}
+
+.map-basemaps-key-terms[hidden] {
+  display: none;
+}
+
+/* Тёмная тема */
+
+[data-map-basemaps-theme='dark'] .map-basemaps-control,
+.map-basemaps-control[data-theme='dark'] {
+  --map-basemaps-bg: rgba(15, 23, 42, 0.96);
+  --map-basemaps-border: rgba(148, 163, 184, 0.3);
+  --map-basemaps-color: #e2e8f0;
+  --map-basemaps-muted: #94a3b8;
+  --map-basemaps-hover: rgba(148, 163, 184, 0.15);
+  --map-basemaps-active: #38bdf8;
+  --map-basemaps-active-color: #0f172a;
+  --map-basemaps-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  .map-basemaps-control:not([data-theme='light']) {
+    --map-basemaps-bg: rgba(15, 23, 42, 0.96);
+    --map-basemaps-border: rgba(148, 163, 184, 0.3);
+    --map-basemaps-color: #e2e8f0;
+    --map-basemaps-muted: #94a3b8;
+    --map-basemaps-hover: rgba(148, 163, 184, 0.15);
+    --map-basemaps-active: #38bdf8;
+    --map-basemaps-active-color: #0f172a;
+    --map-basemaps-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (pointer: coarse) {
+  .map-basemaps-toggle {
+    min-height: 42px;
+    padding: 8px 12px;
+  }
+
+  .map-basemaps-item {
+    min-height: 48px;
+    padding: 8px;
+  }
+
+  .map-basemaps-key-actions button {
+    height: 38px;
+  }
+}
+
+@media (max-width: 520px) {
+  .map-basemaps-panel {
+    width: min(300px, calc(100vw - 20px));
+    max-height: min(62vh, 440px);
+  }
+
+  .map-basemaps-toggle-label {
+    display: none;
+  }
+
+  .map-basemaps-toggle {
+    width: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+}
