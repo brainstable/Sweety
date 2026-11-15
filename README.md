@@ -1,12 +1,19 @@
-# Sweety
+<p align="center">
+  <img src="assets/brand/sweety-logo.svg" alt="Sweety — модульная JavaScript-библиотека интерактивных карт" width="300">
+</p>
 
-**Sweety** — модульная JavaScript-библиотека интерактивных карт без runtime-зависимостей.
+<h1 align="center">Sweety</h1>
+
+<p align="center"><strong>Модульная JavaScript-библиотека интерактивных карт без runtime-зависимостей.</strong></p>
+
 Ядро API — центральный класс `Map`, слои, контролы, события и плагины. Библиотека
 поставляется в виде ES-модулей и UMD-сборки, а для стилей используется отдельный
 CSS-файл.
 
-[![CI](https://github.com/brainstable/sweety/actions/workflows/ci.yml/badge.svg)](https://github.com/brainstable/sweety/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/brainstable/sweety/actions/workflows/ci.yml"><img src="https://github.com/brainstable/sweety/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
+</p>
 
 ## Возможности
 
@@ -461,6 +468,7 @@ docs/          архитектура, API, Git-процесс
 - [API Reference](docs/API.md)
 - [Архитектура](docs/ARCHITECTURE.md)
 - [Git-процесс](docs/GIT-WORKFLOW.md)
+- [Бренд и логотип](docs/BRAND.md)
 - [CHANGELOG](CHANGELOG.md)
 
 ## Лицензия
