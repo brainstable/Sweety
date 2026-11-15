@@ -910,10 +910,12 @@ function createHandler(root, version) {
     }
 
     let pathname;
+    let rawPathname;
 
     try {
       const url = new URL(request.url || '/', 'http://localhost');
-      pathname = decodeURIComponent(url.pathname).toLowerCase();
+      rawPathname = decodeURIComponent(url.pathname);
+      pathname = rawPathname.toLowerCase();
     } catch {
       next();
       return;
@@ -928,7 +930,11 @@ function createHandler(root, version) {
 
     const doc = DOC_PAGES.get(pathname);
     if (!doc) {
-      next();
+      if (!pathname.endsWith('.md') || pathname.startsWith('/node_modules/')) {
+        next();
+        return;
+      }
+      await serveMarkdownFile(rawPathname, request, response, next);
       return;
     }
 
@@ -954,6 +960,51 @@ function createHandler(root, version) {
       next();
     }
   };
+
+  /**
+   * Любой .md внутри проекта отдаётся как HTML с UTF-8. Это закрывает не только
+   * docs/, но и README пакетов в монорепозитории.
+   */
+  async function serveMarkdownFile(requestPath, request, response, next) {
+    try {
+      const relative = requestPath.replace(/^\/+/, '');
+      const filePath = resolve(rootPath, relative);
+      if (!filePath.startsWith(`${rootPath}${sep}`)) {
+        next();
+        return;
+      }
+      const markdown = await readFile(filePath, 'utf8');
+      const heading = markdown.match(/^\s{0,3}#\s+(.+?)\s*$/m);
+      const doc = {
+        id: 'package',
+        title: heading ? stripInline(heading[1]) : relative.split('/').pop(),
+        file: relative,
+        basePath: requestPath,
+      };
+      const body = renderMarkdown(markdown, { basePath: requestPath });
+      const page = renderPage(doc, body, version);
+
+      response.statusCode = 200;
+      response.setHeader('Content-Type', 'text/html; charset=utf-8');
+      response.setHeader('Cache-Control', 'no-cache');
+      response.setHeader('X-Content-Type-Options', 'nosniff');
+      response.end(request.method === 'HEAD' ? undefined : page);
+    } catch (error) {
+      if (error?.code !== 'ENOENT' && error?.code !== 'EISDIR') {
+        console.error('[sweety-docs] не удалось отрисовать markdown:', error);
+      }
+      next();
+    }
+  }
+}
+
+/**
+ * Экспортируется для тестов: проверяет, что middleware отдаёт markdown как
+ * HTML с charset=utf-8, а не как text/markdown без кодировки.
+ * @param {{root?: string, version?: string}} [options]
+ */
+export function createDocsMiddleware({ root = process.cwd(), version = '' } = {}) {
+  return createHandler(root, version);
 }
 
 export function docsPreview({ version = '' } = {}) {
