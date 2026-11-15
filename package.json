@@ -8,7 +8,7 @@
   "style": "./dist/sweety.css",
   "unpkg": "./dist/sweety.umd.js",
   "jsdelivr": "./dist/sweety.umd.js",
-  "homepage": "https://github.com/brainstable/sweety#readme",
+  "homepage": "https://brainstable.github.io/Sweety/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/brainstable/sweety.git"
@@ -31,13 +31,12 @@
     "CHANGELOG.md",
     "LICENSE"
   ],
-  "sideEffects": [
-    "**/*.css"
-  ],
   "scripts": {
     "dev": "vite --open /examples/",
     "build": "vite build && node scripts/copy-umd.mjs",
     "build:lib": "vite build",
+    "build:site": "node scripts/build-site.mjs",
+    "preview:site": "vite preview --config vite.site.config.js",
     "verify:build": "node scripts/verify-build.mjs",
     "preview": "vite preview",
     "test": "vitest run",
