@@ -405,6 +405,12 @@ npm run test     # vitest + jsdom
 npm run build    # ESM + UMD + CSS
 ```
 
+Демо открывается через dev-сервер:
+`http://localhost:5173/packages/map-edit-plugin/demo/`. При открытии
+`demo/index.html` двойным щелчком срабатывает защита: страница либо
+перенаправляет на запущенный Vite, либо показывает команду запуска вместо
+пустой карты.
+
 Тесты покрывают `GeometryUtils`, `CommandStack`, создание/редактирование
 полигонов, drag вершин и тела, midpoint, круг, прямоугольник, GeoJSON-группы,
 удаление, undo/redo, клавиатуру, snap, самопересечения и очистку при `destroy()`.
