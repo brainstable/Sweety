@@ -4,6 +4,9 @@ import { LatLng, toLatLng } from './LatLng.js';
 import { Point } from './Point.js';
 import { resolveCRS } from '../geo/CRS.js';
 import { DragHandler } from '../handlers/DragHandler.js';
+import { ScrollWheelZoom } from '../handlers/ScrollWheelZoom.js';
+import { DoubleClickZoom } from '../handlers/DoubleClickZoom.js';
+import { TouchZoom } from '../handlers/TouchZoom.js';
 import {
   addClass,
   create,
@@ -14,7 +17,14 @@ import {
   remove,
   removeClass,
 } from '../util/dom.js';
-import { cancelAnimFrame, clamp, extend, isObject, requestAnimFrame } from '../util/index.js';
+import {
+  cancelAnimFrame,
+  clamp,
+  easeOutCubic,
+  extend,
+  isObject,
+  requestAnimFrame,
+} from '../util/index.js';
 
 /** @type {Function[]} */
 const initHooks = [];
@@ -144,6 +154,13 @@ export class Map extends Evented {
     this._resizeListener = null;
     this._frame = null;
     this._dragging = false;
+    this._pinching = false;
+    this._animatingZoom = false;
+    this._zoomAnimated = false;
+    this._zoomAnimTimer = null;
+    this._zoomAnimFrame = null;
+    this._panFrame = null;
+    this._panEnd = null;
 
     this._initLayout();
     this._initEvents();
@@ -225,6 +242,9 @@ export class Map extends Evented {
   /** @private */
   _initHandlers() {
     this._addHandler('dragging', DragHandler, this.options.dragging);
+    this._addHandler('scrollWheelZoom', ScrollWheelZoom, this.options.scrollWheelZoom);
+    this._addHandler('doubleClickZoom', DoubleClickZoom, this.options.doubleClickZoom);
+    this._addHandler('touchZoom', TouchZoom, this.options.touchZoom);
   }
 
   /**
@@ -380,6 +400,14 @@ export class Map extends Evented {
       cancelAnimFrame(this._frame);
       this._frame = null;
     }
+    if (this._panFrame) {
+      cancelAnimFrame(this._panFrame);
+      this._panFrame = null;
+    }
+    if (this._zoomAnimTimer) {
+      clearTimeout(this._zoomAnimTimer);
+      this._zoomAnimTimer = null;
+    }
 
     for (const id of Object.keys(this._layers)) this.removeLayer(this._layers[id]);
     for (const control of [...this._controls]) this.removeControl(control);
@@ -428,17 +456,20 @@ export class Map extends Evented {
    * @returns {this}
    */
   setView(center, zoom = this._zoom, options = {}) {
+    if (this._animatingZoom) this._finishZoomAnimation();
+    if (this._panFrame && !options.animate) this._cancelPanAnimation();
+
     const newCenter = toLatLng(center);
     const newZoom = this._limitZoom(Number(zoom));
     if (!Number.isFinite(newZoom)) throw new TypeError('setView requires a finite zoom');
 
     if (options.animate && this._loaded && this._size.x > 0 && this._size.y > 0) {
       if (newZoom !== this._zoom) {
-        this._animatedZoom(newCenter, newZoom);
+        this._animatedZoom(newCenter, newZoom, options);
         return this;
       }
       if (!newCenter.equals(this._center)) {
-        this.panTo(newCenter, options);
+        this._animatePan(newCenter, options);
         return this;
       }
     }
@@ -613,14 +644,17 @@ export class Map extends Evented {
    */
   setZoomAround(anchor, zoom, options = {}) {
     const targetZoom = this._limitZoom(Number(zoom));
-    const anchorPoint =
-      anchor instanceof Point || (isObject(anchor) && 'x' in anchor)
-        ? anchor instanceof Point
-          ? anchor.clone()
-          : new Point(anchor)
-        : this.latLngToContainerPoint(anchor);
+    const isPixelAnchor = anchor instanceof Point || (isObject(anchor) && 'x' in anchor);
+    const anchorPoint = isPixelAnchor
+      ? anchor instanceof Point
+        ? anchor.clone()
+        : new Point(anchor)
+      : this.latLngToContainerPoint(anchor);
+    const anchorLatLng = isPixelAnchor
+      ? this.containerPointToLatLng(anchorPoint)
+      : toLatLng(anchor);
 
-    const worldPoint = this.project(anchor, targetZoom)
+    const worldPoint = this.project(anchorLatLng, targetZoom)
       .subtract(anchorPoint)
       .add(this._size.clone().divideBy(2));
     return this.setView(this.unproject(worldPoint, targetZoom), targetZoom, options);
@@ -1042,12 +1076,130 @@ export class Map extends Evented {
    * ----------------------------------------------------------------------- */
 
   /**
-   * Placeholder for the CSS zoom transition; implemented in the interaction
-   * layer and kept here so setView remains the single entry point.
+   * Animate a zoom transition with a CSS scale on the map pane. The target
+   * view is rendered first so tiles and vectors are already at their final
+   * resolution when the transition starts.
+   * @param {LatLng} center
+   * @param {number} zoom
+   * @param {object} [options]
    * @private
    */
-  _animatedZoom(center, zoom) {
-    this.setView(center, zoom, { animate: false });
+  _animatedZoom(center, zoom, options = {}) {
+    if (this._animatingZoom) this._finishZoomAnimation();
+    if (this._panFrame) this._cancelPanAnimation();
+
+    const oldZoom = this._zoom;
+    const distance = Math.abs(zoom - oldZoom);
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (
+      this.options.zoomAnimation === false ||
+      distance > (this.options.zoomAnimationThreshold ?? 4) ||
+      reducedMotion
+    ) {
+      this._moveStart(true);
+      this._resetView(center, zoom, { reset: true });
+      this._moveEnd(true);
+      return;
+    }
+
+    const anchor = options.zoomAnchor
+      ? new Point(options.zoomAnchor)
+      : this._size.clone().divideBy(2);
+
+    this._moveStart(true);
+    this.fire('zoomanim', { center, zoom, oldZoom }, false);
+    this._resetView(center, zoom, { reset: true });
+
+    const pane = this._mapPane;
+    const startScale = 2 ** (oldZoom - zoom);
+    this._animatingZoom = true;
+    this._zoomAnimated = true;
+    pane.style.transition = 'none';
+    pane.style.transformOrigin = `${anchor.x}px ${anchor.y}px`;
+    pane.style.transform = `scale(${startScale})`;
+    // Force a style flush before the transition to make the first frame stick.
+    void pane.offsetWidth;
+    addClass(this._container, 'sweety-zoom-anim');
+    this._zoomAnimFrame = requestAnimFrame(() => {
+      pane.style.transform = 'scale(1)';
+    });
+
+    this._zoomAnimTimer = setTimeout(() => this._finishZoomAnimation(), 260);
+  }
+
+  /**
+   * Complete an in-flight zoom transition and fire `moveend`/`zoomend`.
+   * Safe to call when no transition is running.
+   * @private
+   */
+  _finishZoomAnimation() {
+    if (!this._animatingZoom) return;
+    this._animatingZoom = false;
+    this._zoomAnimated = false;
+    if (this._zoomAnimTimer) {
+      clearTimeout(this._zoomAnimTimer);
+      this._zoomAnimTimer = null;
+    }
+    if (this._zoomAnimFrame) {
+      cancelAnimFrame(this._zoomAnimFrame);
+      this._zoomAnimFrame = null;
+    }
+    const pane = this._mapPane;
+    if (pane) {
+      pane.style.transition = 'none';
+      pane.style.transform = '';
+      pane.style.transformOrigin = '';
+    }
+    removeClass(this._container, 'sweety-zoom-anim');
+    this._moveEnd(true);
+  }
+
+  /**
+   * Tween the viewport centre over a short distance.
+   * @param {LatLng} center
+   * @param {object} [options]
+   * @private
+   */
+  _animatePan(center, options = {}) {
+    if (this._panFrame) this._cancelPanAnimation();
+    const from = this._center.clone();
+    const target = this._limitCenter(new LatLng(center), this._zoom, this.options.maxBounds);
+    const duration = Math.max(80, Number(options.duration) || 250);
+    const startTime = performance.now();
+
+    this._moveStart(false);
+    const step = () => {
+      const now = performance.now();
+      const progress = Math.min(1, (now - startTime) / duration);
+      const eased = easeOutCubic(progress);
+      const centerPoint = this.project(from)
+        .multiplyBy(1 - eased)
+        .add(this.project(target).multiplyBy(eased));
+      this._moveDuringDrag(this.unproject(centerPoint));
+      if (progress < 1) {
+        this._panFrame = requestAnimFrame(step);
+      } else {
+        this._panFrame = null;
+        this._panEnd = null;
+        this._moveEnd(false);
+      }
+    };
+    this._panEnd = () => {
+      if (this._panFrame) cancelAnimFrame(this._panFrame);
+      this._panFrame = null;
+      this._panEnd = null;
+      this._moveEnd(false);
+    };
+    this._panFrame = requestAnimFrame(step);
+  }
+
+  /** @private */
+  _cancelPanAnimation() {
+    if (this._panEnd) this._panEnd();
   }
 
   /**
