@@ -91,6 +91,8 @@ describe('LayerGroup and FeatureGroup', () => {
     group.addTo(map);
 
     expect(group.getLayers()).toEqual([first, second]);
+    expect(map.hasLayer(group)).toBe(true);
+    expect(map.getLayers()).toHaveLength(3);
     expect(map.hasLayer(first)).toBe(true);
     expect(map.hasLayer(second)).toBe(true);
     expect(first.added).toBe(1);
@@ -103,6 +105,22 @@ describe('LayerGroup and FeatureGroup', () => {
     group.clearLayers();
     expect(group.getLayers()).toHaveLength(0);
     expect(second.removed).toBe(1);
+    map.remove();
+  });
+
+  it('does not collide ids when children are stamped before the group', () => {
+    const { map } = setup();
+    const first = new StubLayer();
+    const second = new StubLayer();
+    const group = new LayerGroup([first, second]);
+    expect(first._sweetyId).toBeDefined();
+    expect(second._sweetyId).toBeDefined();
+    group.addTo(map);
+
+    expect(group._sweetyId).not.toBe(first._sweetyId);
+    expect(group._sweetyId).not.toBe(second._sweetyId);
+    expect(map.hasLayer(group)).toBe(true);
+    expect(map.getLayers()).toHaveLength(3);
     map.remove();
   });
 

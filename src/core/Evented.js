@@ -1,3 +1,5 @@
+import { stamp } from '../util/index.js';
+
 let eventId = 0;
 
 /**
@@ -167,7 +169,7 @@ export class Evented {
   addEventParent(parent) {
     if (!parent) return this;
     if (!this._eventParents) this._eventParents = Object.create(null);
-    this._eventParents[parent._sweetyId || (parent._sweetyId = ++eventId)] = parent;
+    this._eventParents[stamp(parent)] = parent;
     return this;
   }
 
@@ -178,7 +180,7 @@ export class Evented {
    */
   removeEventParent(parent) {
     if (this._eventParents && parent) {
-      delete this._eventParents[parent._sweetyId];
+      delete this._eventParents[stamp(parent)];
     }
     return this;
   }
