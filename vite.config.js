@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import { readFileSync } from 'node:fs';
+import { docsPreview } from './scripts/docs-preview.mjs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 export default defineConfig({
+  plugins: [docsPreview({ version: pkg.version })],
   define: {
     __SWEETY_VERSION__: JSON.stringify(pkg.version),
   },
