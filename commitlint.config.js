@@ -1,0 +1,33 @@
+export default {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'header-max-length': [2, 'always', 100],
+    'body-max-line-length': [0, 'always'],
+    'scope-enum': [
+      2,
+      'always',
+      [
+        'core',
+        'layers',
+        'tiles',
+        'markers',
+        'popup',
+        'vector',
+        'geojson',
+        'controls',
+        'projection',
+        'events',
+        'utils',
+        'renderer',
+        'plugins',
+        'styles',
+        'docs',
+        'demo',
+        'build',
+        'ci',
+        'release',
+        'deps',
+      ],
+    ],
+  },
+};
