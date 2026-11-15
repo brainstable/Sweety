@@ -63,7 +63,8 @@ map.edit(); // editor
 - Undo/redo на Command-паттерне, ограничение истории.
 - Snap-to-grid и привязка к вершинам соседних объектов.
 - Проверка самопересечений с событием `selfintersection`.
-- Панель инструментов с inline-SVG, i18n, тултипами и мобильными размерами.
+- Вертикальная панель инструментов с inline-SVG, i18n, тултипами и мобильными
+  размерами; на низкой карте инструменты переносятся в следующий столбец.
 - Отдельные SVG-слои вершин и предпросмотра: геометрия карты не перерисовывается.
 - CSS-переменные и светлая/тёмная темы.
 
@@ -335,7 +336,9 @@ editor.selectLayer(geo);
 
 ```css
 .map-edit-plugin {
-  --map-edit-handle-size: 10px;
+  --map-edit-control-bg: rgba(255, 255, 255, 0.96);
+  --map-edit-control-border: rgba(15, 23, 42, 0.14);
+  --map-edit-control-radius: 9px;
   --map-edit-handle-color: #ffffff;
   --map-edit-handle-stroke: #111827;
   --map-edit-midpoint-color: #93c5fd;
@@ -344,6 +347,16 @@ editor.selectLayer(geo);
   --map-edit-ghost-opacity: 0.65;
   --map-edit-selected-stroke: #f59e0b;
 }
+```
+
+Панель инструментов вертикальная: кнопки идут сверху вниз, а на низкой карте,
+где столбец не помещается, CSS-перенос раскладывает инструменты во второй
+столбец — панель не обрезается краем карты. Высота ограничивается по
+фактическому размеру карты и пересчитывается на `resize`. Горизонтальная
+раскладка возвращается классом `map-edit-control-horizontal`:
+
+```js
+editor.control.getContainer().classList.add('map-edit-control-horizontal');
 ```
 
 `style.selectedStyle` не перезаписывает стиль слоя: выделение реализовано
