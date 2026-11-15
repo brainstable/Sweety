@@ -21,6 +21,7 @@ export default {
         'renderer',
         'plugins',
         'edit',
+        'basemaps',
         'plugin',
         'draw',
         'ui',
