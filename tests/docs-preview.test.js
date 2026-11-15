@@ -84,6 +84,26 @@ describe('docs preview', () => {
     expect(result.body).toContain('<article class="markdown">');
   });
 
+  it('перечисляет все демо в сайдбаре документации', async () => {
+    const result = await runMiddleware('/docs/');
+    expect(result.status).toBe(200);
+
+    const nav = result.body.match(/<nav class="nav nav-demos"[\s\S]*?<\/nav>/);
+    expect(nav).not.toBeNull();
+    expect(nav[0]).toContain('aria-label="Демо"');
+
+    const demos = [
+      ['/examples/', 'Обзор карты'],
+      ['/packages/map-edit-plugin/demo/', 'Редактор геометрии'],
+      ['/packages/map-basemaps/demo/', 'Каталог подложек'],
+    ];
+    for (const [href, title] of demos) {
+      expect(nav[0]).toContain(`href="${href}"`);
+      expect(nav[0]).toContain(title);
+    }
+    expect(nav[0].match(/target="_blank" rel="noreferrer"/g)).toHaveLength(demos.length);
+  });
+
   it('не перехватывает несуществующий markdown', async () => {
     const result = await runMiddleware('/packages/map-edit-plugin/missing.md');
     expect(result.next).toBe(true);
