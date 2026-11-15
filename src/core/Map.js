@@ -3,6 +3,7 @@ import { Evented } from './Evented.js';
 import { LatLng, toLatLng } from './LatLng.js';
 import { Point } from './Point.js';
 import { resolveCRS } from '../geo/CRS.js';
+import { DragHandler } from '../handlers/DragHandler.js';
 import {
   addClass,
   create,
@@ -149,6 +150,7 @@ export class Map extends Evented {
     this._initView();
 
     this._loaded = true;
+    this._initHandlers();
     this.fire('load');
     this.fire('ready');
 
@@ -218,6 +220,52 @@ export class Map extends Evented {
         window.addEventListener('resize', this._resizeListener);
       }
     }
+  }
+
+  /** @private */
+  _initHandlers() {
+    this._addHandler('dragging', DragHandler, this.options.dragging);
+  }
+
+  /**
+   * Instantiate and expose an interaction handler on the map.
+   * @param {string} name
+   * @param {new (map: Map) => import('./Handler.js').Handler} HandlerClass
+   * @param {boolean} [enabled=true]
+   * @returns {import('./Handler.js').Handler}
+   */
+  _addHandler(name, HandlerClass, enabled = true) {
+    if (this._handlers[name]) return this._handlers[name];
+    const handler = new HandlerClass(this);
+    this._handlers[name] = handler;
+    this[name] = handler;
+    if (enabled) handler.enable();
+    return handler;
+  }
+
+  /**
+   * Apply a centre during an active drag or kinetic animation. Unlike
+   * {@link setView}, this does not start or end a movement transaction.
+   * @param {LatLng|number[]} center
+   * @returns {boolean} whether the centre actually changed
+   * @private
+   */
+  _moveDuringDrag(center) {
+    const limited = this._limitCenter(
+      center instanceof LatLng ? center : new LatLng(center),
+      this._zoom,
+      this.options.maxBounds,
+    );
+    const moved = !limited.equals(this._center, 1e-12);
+    this._center = limited;
+    this._pixelOrigin = this._getTopLeftPoint(limited, this._zoom);
+    this._lastCenter = limited.clone();
+    this._lastZoom = this._zoom;
+    this._updateLayers();
+    if (moved) {
+      this.fire('move', { center: this._center, zoom: this._zoom }, false);
+    }
+    return moved;
   }
 
   /** @private */
