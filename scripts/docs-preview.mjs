@@ -23,6 +23,26 @@ const DOC_NAV = [
   { id: 'changelog', title: 'CHANGELOG', href: '/CHANGELOG.md' },
 ];
 
+// Все интерактивные демо репозитория. Список показывается в сайдбаре на каждой
+// странице документации, чтобы демо не приходилось искать по README.
+const DEMO_NAV = [
+  {
+    title: 'Обзор карты',
+    note: 'маркеры, полигоны, GeoJSON',
+    href: '/examples/',
+  },
+  {
+    title: 'Редактор геометрии',
+    note: 'рисование и правка вершин',
+    href: '/packages/map-edit-plugin/demo/',
+  },
+  {
+    title: 'Каталог подложек',
+    note: 'переключение и превью',
+    href: '/packages/map-basemaps/demo/',
+  },
+];
+
 const DOC_PAGES = new Map([
   ['/docs/', { id: 'overview', title: 'Обзор', file: 'README.md', basePath: '/README.md' }],
   ['/readme.md', { id: 'overview', title: 'Обзор', file: 'README.md', basePath: '/README.md' }],
@@ -399,6 +419,12 @@ function renderPage(doc, body, version) {
     const active = item.id === doc.id ? ' class="active" aria-current="page"' : '';
     return `<a href="${item.href}"${active}>${item.title}</a>`;
   }).join('');
+  const demoNavigation = DEMO_NAV.map(
+    (item) =>
+      `<a href="${item.href}" target="_blank" rel="noreferrer"><span>${escapeHtml(
+        item.title,
+      )}</span><small>${escapeHtml(item.note)}</small></a>`,
+  ).join('');
 
   return `<!doctype html>
 <html lang="ru">
@@ -417,8 +443,10 @@ function renderPage(doc, body, version) {
           <span class="brand-text"><strong>Sweety</strong><small>интерактивные карты</small></span>
         </a>
         <nav class="nav" aria-label="Документация">${navigation}</nav>
+        <nav class="nav nav-demos" aria-label="Демо">
+          <span class="nav-title">Демо</span>${demoNavigation}
+        </nav>
         <div class="sidebar-footer">
-          <a href="/examples/">Демо</a>
           <span>v${escapeHtml(version)}</span>
         </div>
       </aside>
@@ -565,10 +593,50 @@ a {
   font-weight: 600;
 }
 
+.nav-demos {
+  gap: 2px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.nav-title {
+  padding: 0 12px 6px;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.nav-demos a {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.35;
+}
+
+.nav-demos a > span::after {
+  margin-left: 4px;
+  color: #475569;
+  content: "↗";
+  font-size: 11px;
+}
+
+.nav-demos a small {
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.nav-demos a:hover small {
+  color: #94a3b8;
+}
+
 .sidebar-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: auto;
   padding-top: 28px;
   color: #64748b;
@@ -857,6 +925,20 @@ a {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 6px;
+  }
+
+  .nav-demos {
+    margin-top: 12px;
+    padding-top: 14px;
+  }
+
+  .nav-title {
+    flex: 0 0 100%;
+    padding: 0 2px 4px;
+  }
+
+  .nav-demos a {
+    flex: 0 0 100%;
   }
 
   .sidebar-footer {
