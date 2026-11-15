@@ -1,0 +1,55 @@
+name: Предложение функции
+description: Новая возможность или улучшение API
+title: 'feat: '
+labels: ['enhancement', 'triage']
+assignees: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую задачу нужно решить
+      description: Опишите проблему, а не только готовое решение
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Предлагаемое решение
+      description: API, поведение, пример использования
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы
+      description: Что рассматривалось и почему не подходит
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Область
+      options:
+        - core
+        - layers
+        - tiles
+        - markers
+        - vector
+        - geojson
+        - controls
+        - projection
+        - plugins
+        - docs
+        - build
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Проверки
+      options:
+        - label: Предложение не дублирует существующие issues
+          required: true
+        - label: Я готов(а) помочь с реализацией или тестами

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Документация API
+    url: https://github.com/brainstable/sweety/blob/main/docs/API.md
+    about: Справочник классов, методов и событий
+  - name: Вопросы и обсуждения
+    url: https://github.com/brainstable/sweety/discussions
+    about: Задайте вопрос сообществу
