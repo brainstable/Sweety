@@ -1,0 +1,536 @@
+/* Базовые стили Sweety. Подключайте этот файл рядом с JS-сборкой. */
+
+.sweety-container {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  outline: none;
+  background: #d9e2ec;
+  color: #1f2937;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sweety-container.sweety-dragging,
+.sweety-container.sweety-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.sweety-dragging,
+.sweety-dragging * {
+  user-select: none;
+}
+
+.sweety-container.sweety-grab {
+  cursor: grab;
+}
+
+.sweety-map-pane {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+}
+
+.sweety-container.sweety-zoom-anim .sweety-map-pane {
+  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+
+.sweety-pane {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sweety-tile-pane {
+  z-index: 200;
+}
+.sweety-overlay-pane {
+  z-index: 400;
+}
+.sweety-shadow-pane {
+  z-index: 500;
+}
+.sweety-marker-pane {
+  z-index: 600;
+}
+.sweety-tooltip-pane {
+  z-index: 650;
+}
+.sweety-popup-pane {
+  z-index: 700;
+}
+
+.sweety-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Тайлы */
+
+.sweety-tile-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.sweety-tile {
+  position: absolute;
+  border: 0;
+  pointer-events: none;
+  user-select: none;
+  max-width: none;
+  max-height: none;
+}
+
+.sweety-tile-loading {
+  opacity: 0;
+}
+
+.sweety-tile-loaded {
+  opacity: 1;
+  transition: opacity 180ms linear;
+}
+
+.sweety-tile-error {
+  opacity: 0.3;
+}
+
+/* Маркеры */
+
+.sweety-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.sweety-marker-draggable {
+  cursor: grab;
+}
+
+.sweety-container.sweety-dragging .sweety-marker-draggable {
+  cursor: grabbing;
+}
+
+.sweety-marker-icon-img,
+.sweety-marker-shadow-img {
+  position: absolute;
+  display: block;
+  border: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.sweety-marker-shadow {
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.sweety-div-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #fff;
+  background: #2f6fed;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
+  transform: translate(-50%, -50%);
+}
+
+.sweety-marker:focus-visible {
+  outline: 2px solid #2f6fed;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Векторы */
+
+.sweety-svg-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sweety-path {
+  pointer-events: auto;
+  cursor: pointer;
+  vector-effect: non-scaling-stroke;
+}
+
+.sweety-canvas-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+}
+
+/* Всплывающие окна и подсказки */
+
+.sweety-popup,
+.sweety-tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.sweety-popup {
+  min-width: 50px;
+  max-width: 300px;
+  padding: 14px 28px 14px 14px;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 10px;
+  box-shadow:
+    0 12px 32px rgb(15 23 42 / 22%),
+    0 2px 8px rgb(15 23 42 / 12%);
+  z-index: 700;
+}
+
+.sweety-popup-content {
+  overflow-wrap: anywhere;
+}
+
+.sweety-popup-content > :first-child {
+  margin-top: 0;
+}
+.sweety-popup-content > :last-child {
+  margin-bottom: 0;
+}
+
+.sweety-popup-close {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sweety-popup-close:hover,
+.sweety-popup-close:focus-visible {
+  background: #eef2f7;
+  color: #0f172a;
+  outline: none;
+}
+
+.sweety-tooltip {
+  max-width: 260px;
+  padding: 6px 9px;
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 22%);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 650;
+}
+
+.sweety-popup::after,
+.sweety-tooltip::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 7px solid transparent;
+}
+
+.sweety-popup-top::after {
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+  border-top-color: #fff;
+}
+.sweety-popup-bottom::after {
+  left: 50%;
+  top: -14px;
+  transform: translateX(-50%);
+  border-bottom-color: #fff;
+}
+.sweety-popup-left::after {
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: #fff;
+}
+.sweety-popup-right::after {
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: #fff;
+}
+
+.sweety-tooltip-top::after {
+  left: 50%;
+  bottom: -12px;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-top-color: #111827;
+}
+.sweety-tooltip-bottom::after {
+  left: 50%;
+  top: -12px;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-bottom-color: #111827;
+}
+.sweety-tooltip-left::after {
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-left-color: #111827;
+}
+.sweety-tooltip-right::after {
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-right-color: #111827;
+}
+
+/* Контролы */
+
+.sweety-control-corner {
+  position: absolute;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  margin: 10px;
+}
+
+.sweety-topleft {
+  top: 0;
+  left: 0;
+  align-items: flex-start;
+}
+.sweety-topright {
+  top: 0;
+  right: 0;
+  align-items: flex-end;
+}
+.sweety-bottomleft {
+  bottom: 0;
+  left: 0;
+  align-items: flex-start;
+}
+.sweety-bottomright {
+  bottom: 0;
+  right: 0;
+  align-items: flex-end;
+}
+
+.sweety-control {
+  pointer-events: auto;
+  box-sizing: border-box;
+  color: #1f2937;
+  font: inherit;
+}
+
+.sweety-control button {
+  font: inherit;
+}
+
+.sweety-control-zoom {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 3px 14px rgb(15 23 42 / 22%);
+  background: #fff;
+}
+
+.sweety-control-zoom button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sweety-control-zoom button:last-child {
+  border-bottom: 0;
+}
+
+.sweety-control-zoom button:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.sweety-control-zoom button:disabled {
+  color: #cbd5e1;
+  cursor: default;
+}
+
+.sweety-control-attribution {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 88%);
+  color: #334155;
+  font-size: 11px;
+  line-height: 1.5;
+  box-shadow: 0 1px 5px rgb(15 23 42 / 18%);
+  backdrop-filter: blur(3px);
+  max-width: min(70vw, 560px);
+}
+
+.sweety-control-attribution a {
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.sweety-control-attribution a:hover {
+  text-decoration: underline;
+}
+
+.sweety-control-scale {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 82%);
+  box-shadow: 0 1px 5px rgb(15 23 42 / 16%);
+  color: #334155;
+  font-size: 11px;
+}
+
+.sweety-control-scale-line {
+  height: 14px;
+  padding: 0 4px;
+  border: 1px solid #475569;
+  border-top: 0;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sweety-control-layers {
+  position: relative;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgb(15 23 42 / 22%);
+  overflow: hidden;
+}
+
+.sweety-control-layers-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  color: #1f2937;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.sweety-control-layers-toggle:hover {
+  background: #f1f5f9;
+}
+
+.sweety-control-layers-panel {
+  display: none;
+  min-width: 170px;
+  max-height: min(60vh, 380px);
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.sweety-control-layers-expanded .sweety-control-layers-panel {
+  display: block;
+}
+
+.sweety-control-layers-section + .sweety-control-layers-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eef2f7;
+}
+
+.sweety-control-layers-title {
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sweety-control-layers-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sweety-control-layers-option input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #2f6fed;
+}
+
+.sweety-control-layers-option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Служебные состояния */
+
+.sweety-container :focus-visible {
+  outline: 2px solid #2f6fed;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweety-container.sweety-zoom-anim .sweety-map-pane,
+  .sweety-tile-loaded {
+    transition: none;
+  }
+}

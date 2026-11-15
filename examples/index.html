@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Демонстрационная карта Sweety: тайлы OSM, маркеры, полигоны, GeoJSON и Canvas."
+    />
+    <title>Sweety — интерактивная карта</title>
+    <link rel="stylesheet" href="./demo.css" />
+  </head>
+  <body>
+    <header class="demo-header">
+      <div class="demo-brand">
+        <span class="demo-logo" aria-hidden="true">S</span>
+        <div>
+          <strong>Sweety</strong>
+          <span class="demo-subtitle">интерактивная карта без зависимостей</span>
+        </div>
+      </div>
+      <a class="demo-link" href="../README.md">Документация</a>
+    </header>
+
+    <main class="demo-layout">
+      <section class="demo-map-wrap" aria-label="Демонстрационная карта">
+        <div id="map" class="demo-map"></div>
+        <div class="demo-hint">Колесо — зум · перетаскивание — панорама · клик — координаты</div>
+      </section>
+
+      <aside class="demo-panel">
+        <section>
+          <h1>Возможности</h1>
+          <p>
+            Тайлы OpenStreetMap, маркер с попапом, полигон, круг, линия, GeoJSON, слои и кастомный
+            контрол.
+          </p>
+        </section>
+
+        <section>
+          <h2>Вид</h2>
+          <div class="demo-actions">
+            <button type="button" id="fit-kremlin">Показать Кремль</button>
+            <button type="button" id="reset-view">Сбросить вид</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>Много векторов</h2>
+          <p class="demo-muted">
+            Добавляет 400 окружностей в общий Canvas-рендерер. Проверьте плавность панорамирования.
+          </p>
+          <div class="demo-actions">
+            <button type="button" id="add-canvas">Добавить 400</button>
+            <button type="button" id="clear-canvas">Очистить</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>Состояние</h2>
+          <dl class="demo-stats">
+            <div>
+              <dt>Центр</dt>
+              <dd id="stat-center">—</dd>
+            </div>
+            <div>
+              <dt>Зум</dt>
+              <dd id="stat-zoom">—</dd>
+            </div>
+            <div>
+              <dt>Курсор</dt>
+              <dd id="stat-cursor">—</dd>
+            </div>
+            <div>
+              <dt>Слоёв</dt>
+              <dd id="stat-layers">—</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="demo-muted">
+          <h2>Данные</h2>
+          <p>
+            Тайлы © участники OpenStreetMap. Демонстрационные объекты созданы программно и не
+            являются точными географическими данными.
+          </p>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./demo.js"></script>
+  </body>
+</html>
