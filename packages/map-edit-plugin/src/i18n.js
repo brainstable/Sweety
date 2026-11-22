@@ -30,7 +30,7 @@ export const DEFAULT_I18N = {
   unionOverlap: 'Polygons overlap: union by shared borders is not possible',
   unionOpen: 'Polygon borders are open: union is not possible',
   cutSelect: 'Select objects to cut',
-  cutFailed: 'The cut line must cross the border of the object twice',
+  cutFailed: 'The cut line must cross the object border an even number of times',
   holeSelect: 'Select one polygon to add a hole',
   holeFailed: 'Hole must be inside the polygon',
   holeCrosses: 'Hole must not cross the polygon border',

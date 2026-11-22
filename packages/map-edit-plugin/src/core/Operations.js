@@ -286,10 +286,59 @@ function cutterPath(cutter, from, to) {
 }
 
 /**
- * Все пересечения замкнутого кольца с открытой линией.
+ * Расстояние от точки до отрезка.
+ * @param {XY} point
+ * @param {XY} start
+ * @param {XY} end
+ * @returns {number}
+ */
+function distanceToSegmentXY(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= EPSILON) return Math.hypot(point.x - start.x, point.y - start.y);
+  const t = Math.min(
+    1,
+    Math.max(0, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared),
+  );
+  return Math.hypot(point.x - (start.x + t * dx), point.y - (start.y + t * dy));
+}
+
+/**
+ * Знак, с какой стороны от прямой `a → b` лежит точка.
+ * @param {XY} point
+ * @param {XY} a
+ * @param {XY} b
+ * @returns {-1|0|1}
+ */
+function sideOfLine(point, a, b) {
+  const value = (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x);
+  if (Math.abs(value) <= EPSILON) return 0;
+  return value > 0 ? 1 : -1;
+}
+
+/**
+ * Ближайший отрезок режущей линии к точке.
+ * @param {XYRing} cutter
+ * @param {XY} point
+ * @returns {{seg: number, distance: number}|null}
+ */
+function nearestCutterSegment(cutter, point) {
+  let best = null;
+  for (let seg = 0; seg < cutter.length - 1; seg += 1) {
+    const distance = distanceToSegmentXY(point, cutter[seg], cutter[seg + 1]);
+    if (!best || distance < best.distance) best = { seg, distance };
+  }
+  return best;
+}
+
+/**
+ * Все пересечения замкнутого кольца с открытой линией, включая проход через
+ * вершину кольца. Касание вершины (кольцо лежит по одну сторону линии) не
+ * считается пересечением: такой разрез ничего не делит.
  * @param {XYRing} ring
  * @param {XYRing} cutter
- * @returns {Array<{edge: number, t: number, seg: number, u: number, point: XY}>}
+ * @returns {Array<{edge: number, t: number, seg: number, u: number, point: XY, vertex?: boolean}>}
  */
 function ringCrossings(ring, cutter) {
   const crossings = [];
@@ -299,7 +348,7 @@ function ringCrossings(ring, cutter) {
     for (let seg = 0; seg < cutter.length - 1; seg += 1) {
       const hit = segmentIntersection(start, end, cutter[seg], cutter[seg + 1]);
       if (!hit) continue;
-      // Пересечение ровно в вершине кольца уже учтено соседним ребром.
+      // Пересечение ровно в вершине кольца обрабатывается ниже, отдельно.
       if (hit.t <= 1e-9 || hit.t >= 1 - 1e-9) continue;
       if (hit.u < -1e-9 || hit.u > 1 + 1e-9) continue;
       const duplicate = crossings.some(
@@ -315,6 +364,44 @@ function ringCrossings(ring, cutter) {
       });
     }
   }
+
+  // Проход через вершину: линия должна пересекать её насквозь, а не касаться.
+  for (let index = 0; index < ring.length; index += 1) {
+    const point = ring[index];
+    const near = nearestCutterSegment(cutter, point);
+    if (!near || near.distance > 1e-6) continue;
+    const previous = ring[(index - 1 + ring.length) % ring.length];
+    const next = ring[(index + 1) % ring.length];
+    const start = cutter[near.seg];
+    const end = cutter[near.seg + 1];
+    const sidePrevious = sideOfLine(previous, start, end);
+    const sideNext = sideOfLine(next, start, end);
+    if (sidePrevious === 0 || sideNext === 0 || sidePrevious === sideNext) continue;
+    const duplicate = crossings.some(
+      (item) => Math.hypot(item.point.x - point.x, item.point.y - point.y) <= 1e-9,
+    );
+    if (duplicate) continue;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const lengthSquared = dx * dx + dy * dy;
+    const u =
+      lengthSquared <= EPSILON
+        ? 0
+        : Math.min(
+            1,
+            Math.max(0, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared),
+          );
+    crossings.push({
+      edge: index,
+      t: 0,
+      seg: near.seg,
+      u,
+      point: { x: point.x, y: point.y },
+      vertex: true,
+    });
+  }
+
+  crossings.sort((a, b) => a.edge - b.edge || a.t - b.t);
   return crossings;
 }
 
@@ -345,24 +432,25 @@ export function splitRingByLine(ring, cutter) {
   const crossings = ringCrossings(ring, cutter);
   if (crossings.length !== 2) return null;
 
-  // Порядок вдоль кольца: сначала по ребру, затем по параметру внутри ребра.
-  crossings.sort((a, b) => a.edge - b.edge || a.t - b.t);
   const [first, second] = crossings;
-
   const augmented = [];
-  const positions = [0, 0];
+  /** @type {Map<object, number>} */
+  const positions = new Map();
   for (let edge = 0; edge < ring.length; edge += 1) {
     augmented.push(ring[edge]);
-    const onEdge = crossings.filter((item) => item.edge === edge).sort((a, b) => a.t - b.t);
+    // Пересечение ровно в вершине: точка уже есть в кольце, дублировать не нужно.
+    const atVertex = crossings.find((item) => item.vertex && item.edge === edge);
+    if (atVertex) positions.set(atVertex, augmented.length - 1);
+    const onEdge = crossings.filter((item) => !item.vertex && item.edge === edge);
     for (const item of onEdge) {
-      if (item === first) positions[0] = augmented.length;
-      if (item === second) positions[1] = augmented.length;
+      positions.set(item, augmented.length);
       augmented.push(item.point);
     }
   }
 
-  const [start, end] = positions;
-  if (start === end) return null;
+  const start = positions.get(first);
+  const end = positions.get(second);
+  if (start === undefined || end === undefined || start === end) return null;
 
   const arcForward = augmented.slice(start, end + 1);
   const arcBackward = [...augmented.slice(end), ...augmented.slice(0, start + 1)];
@@ -377,15 +465,36 @@ export function splitRingByLine(ring, cutter) {
 }
 
 /**
- * Разрезает полигон (внешнее кольцо и отверстия) линией на две части.
- * Отверстия, задетые разрезом, тоже делятся пополам и попадают в ту часть,
- * внутри которой оказалась половина.
+ * Пересечения внешнего кольца, упорядоченные вдоль режущей линии.
+ * @param {XYRing} ring
+ * @param {XYRing} cutter
+ * @returns {Array<{edge: number, t: number, seg: number, u: number, point: XY}>}
+ */
+function cutterOrderedCrossings(ring, cutter) {
+  return ringCrossings(ring, cutter).sort((a, b) => a.seg - b.seg || a.u - b.u);
+}
+
+/**
+ * Середина пути — точка, по которой ищется часть, которую надо разрезать.
+ * @param {XY[]} path
+ * @returns {XY}
+ */
+function pathMidpoint(path) {
+  const index = Math.max(0, Math.floor((path.length - 1) / 2));
+  const start = path[index];
+  const end = path[index + 1] || path[index];
+  return { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+}
+
+/**
+ * Разрезает одну часть (внешнее кольцо и отверстия) путём, который пересекает
+ * её внешнее кольцо ровно дважды. Отверстия, задетые разрезом, тоже делятся
+ * пополам и попадают в ту часть, внутри которой оказалась половина.
  * @param {XYRing[]} rings кольца полигона; первое — внешнее
  * @param {XYRing} cutter
  * @returns {[XYRing[], XYRing[]]|null}
  */
-export function splitPolygonByLine(rings, cutter) {
-  if (!Array.isArray(rings) || !rings.length) return null;
+function splitPartByPath(rings, cutter) {
   const outerSplit = splitRingByLine(rings[0], cutter);
   if (!outerSplit) return null;
   const parts = [[outerSplit.rings[0]], [outerSplit.rings[1]]];
@@ -404,6 +513,39 @@ export function splitPolygonByLine(rings, cutter) {
       const target = pointInRing(point, parts[0][0]) ? parts[0] : parts[1];
       target.push(candidate);
     }
+  }
+  return parts;
+}
+
+/**
+ * Разрезает полигон линией. Пара пересечений с внешним кольцом — обычный
+ * разрез на две части. Если линия пересекает кольцо несколько раз (зигзаг),
+ * пары пересечений вдоль линии применяются по очереди, и полигон делится на
+ * несколько частей.
+ * @param {XYRing[]} rings кольца полигона; первое — внешнее
+ * @param {XYRing} cutter
+ * @returns {Array<XYRing[]>|null}
+ */
+export function splitPolygonByLine(rings, cutter) {
+  if (!Array.isArray(rings) || !rings.length) return null;
+  if (!Array.isArray(cutter) || cutter.length < 2) return null;
+  const crossings = cutterOrderedCrossings(rings[0], cutter);
+  if (crossings.length < 2 || crossings.length % 2 !== 0) return null;
+
+  if (crossings.length === 2) {
+    return splitPartByPath(rings, cutterPath(cutter, crossings[0], crossings[1]));
+  }
+
+  /** @type {Array<XYRing[]>} */
+  let parts = [rings.map((ring) => ring.map((point) => ({ x: point.x, y: point.y })))];
+  for (let index = 0; index + 1 < crossings.length; index += 2) {
+    const path = cutterPath(cutter, crossings[index], crossings[index + 1]);
+    const middle = pathMidpoint(path);
+    const target = parts.findIndex((part) => pointInPolygonRings(middle, part));
+    if (target === -1) return null;
+    const split = splitPartByPath(parts[target], path);
+    if (!split) return null;
+    parts = [...parts.slice(0, target), split[0], split[1], ...parts.slice(target + 1)];
   }
   return parts;
 }

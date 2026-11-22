@@ -127,3 +127,24 @@ jobs:
 
       - name: Check basemaps package contents
         run: npm pack ./packages/map-basemaps --dry-run
+
+  demo-smoke:
+    name: Demo smoke in headless browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run demo smoke test
+        run: npm run smoke:demo

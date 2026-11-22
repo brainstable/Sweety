@@ -560,7 +560,7 @@ export declare namespace Operations {
   ): 'empty' | 'self-intersection' | 'outside' | 'crosses' | null;
   function countCrossings(ring: XYRing, cutter: XYRing): number;
   function splitRingByLine(ring: XYRing, cutter: XYRing): { rings: [XYRing, XYRing] } | null;
-  function splitPolygonByLine(rings: XYRing[], cutter: XYRing): [XYRing[], XYRing[]] | null;
+  function splitPolygonByLine(rings: XYRing[], cutter: XYRing): XYRing[][] | null;
   function splitPolylineByLine(parts: XYRing[], cutter: XYRing): XYRing[] | null;
   function dissolveRings(
     polygons: XYRing[] | XYRing[][],

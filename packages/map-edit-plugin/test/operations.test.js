@@ -103,6 +103,50 @@ describe('Operations: разрезание', () => {
     expect(area(parts[0][0]) + area(parts[1][0])).toBeCloseTo(100, 6);
   });
 
+  it('разрезает через угол: линия проходит через две вершины', () => {
+    const parts = splitPolygonByLine(
+      [box(0, 0, 10)],
+      [
+        { x: -2, y: -2 },
+        { x: 12, y: 12 },
+      ],
+    );
+    expect(parts).toHaveLength(2);
+    expect(parts[0][0]).toHaveLength(3);
+    expect(parts[1][0]).toHaveLength(3);
+    expect(area(parts[0][0]) + area(parts[1][0])).toBeCloseTo(100, 6);
+  });
+
+  it('зигзаг из четырёх пересечений даёт три части', () => {
+    const parts = splitPolygonByLine(
+      [box(0, 0, 10)],
+      [
+        { x: -2, y: 2 },
+        { x: 12, y: 2 },
+        { x: 12, y: 8 },
+        { x: -2, y: 8 },
+      ],
+    );
+    expect(parts).toHaveLength(3);
+    const areas = parts.map((part) => area(part[0])).sort((a, b) => a - b);
+    expect(areas[0]).toBeCloseTo(20, 6);
+    expect(areas[1]).toBeCloseTo(20, 6);
+    expect(areas[2]).toBeCloseTo(60, 6);
+  });
+
+  it('касание вершины разрезом не считается', () => {
+    expect(
+      splitPolygonByLine(
+        [box(0, 0, 10)],
+        [
+          { x: -5, y: 0 },
+          { x: 0, y: 0 },
+          { x: 5, y: -5 },
+        ],
+      ),
+    ).toBeNull();
+  });
+
   it('обрезает отверстие, через которое проходит линия', () => {
     const rings = [box(0, 0, 10), box(3, 3, 4)];
     const parts = splitPolygonByLine(rings, [

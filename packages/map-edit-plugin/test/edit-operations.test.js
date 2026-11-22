@@ -301,6 +301,23 @@ describe('EditPlugin: разрезание', () => {
     expect(lengths.every((count) => count >= 2)).toBe(true);
   });
 
+  it('режет зигзагом на три части', () => {
+    const { plugin, map } = createHarness();
+    const polygon = box(0, 0, 10, 10).addTo(map);
+    const created = plugin.cutLayers(
+      [polygon],
+      [
+        [-2, 2],
+        [12, 2],
+        [12, 8],
+        [-2, 8],
+      ],
+    );
+    expect(created).toHaveLength(3);
+    expect(map.hasLayer(polygon)).toBe(false);
+    for (const part of created) expect(map.hasLayer(part)).toBe(true);
+  });
+
   it('запускает режим черчения секущей', () => {
     const { plugin, map } = createHarness();
     const polygon = box(0, 0, 10, 10).addTo(map);

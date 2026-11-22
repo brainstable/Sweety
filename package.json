@@ -48,7 +48,8 @@
     "format:check": "prettier --check .",
     "release": "commit-and-tag-version",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "smoke:demo": "node scripts/smoke-demo.mjs"
   },
   "keywords": [
     "map",
