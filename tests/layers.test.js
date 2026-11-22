@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Bounds } from '../src/core/Bounds.js';
 import { Map } from '../src/core/Map.js';
 import { Layer } from '../src/layers/Layer.js';
 import { FeatureGroup, LayerGroup } from '../src/layers/LayerGroup.js';
@@ -152,6 +153,30 @@ describe('LayerGroup and FeatureGroup', () => {
     expect(mapListener).toHaveBeenCalledOnce();
     expect(mapListener.mock.calls[0][0].sourceTarget).toBe(layer);
     map.remove();
+  });
+
+  it('собирает границы дочерних слоёв и вложенных групп', () => {
+    const group = new FeatureGroup();
+    const withBounds = new StubLayer();
+    withBounds.getBounds = () => new Bounds([0, 0], [10, 10]);
+    const withLatLng = new StubLayer();
+    withLatLng.getLatLng = () => ({ lat: -5, lng: 20 });
+    const nested = new FeatureGroup();
+    const inner = new StubLayer();
+    inner.getLatLng = () => ({ lat: 30, lng: -40 });
+    nested.addLayer(inner);
+
+    group.addLayer(withBounds);
+    group.addLayer(withLatLng);
+    group.addLayer(nested);
+
+    const bounds = group.getBounds();
+    expect(bounds.isValid()).toBe(true);
+    expect(bounds.getSouth()).toBe(-5);
+    expect(bounds.getNorth()).toBe(30);
+    expect(bounds.getWest()).toBe(-40);
+    expect(bounds.getEast()).toBe(20);
+    expect(new FeatureGroup().getBounds().isValid()).toBe(false);
   });
 
   it('applies group styling, z-index and popup bindings to features', () => {

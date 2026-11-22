@@ -1,3 +1,4 @@
+import { Bounds } from '../core/Bounds.js';
 import { Layer } from './Layer.js';
 import { stamp } from '../util/index.js';
 
@@ -139,6 +140,26 @@ export class LayerGroup extends Layer {
  * FeatureGroup использует GeoJSONLayer для единой стилизации всех объектов.
  */
 export class FeatureGroup extends LayerGroup {
+  /**
+   * Границы всех дочерних объектов. Векторные слои и круги отдают свои
+   * `getBounds`, маркеры учитываются по координате, вложенные группы —
+   * рекурсивно. Пустая группа возвращает невалидные границы.
+   * @returns {import('../core/Bounds.js').Bounds}
+   */
+  getBounds() {
+    const bounds = new Bounds();
+    this.eachLayer((layer) => {
+      if (!layer) return;
+      if (typeof layer.getBounds === 'function') {
+        const childBounds = layer.getBounds();
+        if (childBounds) bounds.extend(childBounds);
+        return;
+      }
+      if (typeof layer.getLatLng === 'function') bounds.extend(layer.getLatLng());
+    });
+    return bounds;
+  }
+
   /** @param {Layer} layer */
   addLayer(layer) {
     super.addLayer(layer);

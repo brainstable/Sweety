@@ -233,6 +233,9 @@ evented.listens('click');
 
 `FeatureGroup` дополнительно:
 
+- `getBounds()` — общие границы всех дочерних объектов: пути и круги отдают
+  свои границы, маркеры учитываются по координате, вложенные группы — рекурсивно.
+  Для `GeoJSONLayer` это тот же метод;
 - `bindPopup`, `unbindPopup`, `openPopup`, `closePopup`, `togglePopup`;
 - `bindTooltip`, `unbindTooltip`, `openTooltip`, `closeTooltip`, `toggleTooltip`;
 - `setStyle`, `bringToFront`, `bringToBack`.
@@ -383,6 +386,7 @@ new GeoJSONLayer(geojson, {
 | Метод                | Описание                 |
 | -------------------- | ------------------------ |
 | `addData(geojson)`   | Добавить данные          |
+| `getBounds()`        | Границы всех объектов    |
 | `resetStyle(layer?)` | Вернуть стиль по `style` |
 | `setStyle(style)`    | Задать стиль/функцию     |
 | `toGeoJSON()`        | FeatureCollection        |

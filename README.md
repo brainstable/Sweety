@@ -325,10 +325,13 @@ group.addTo(map);
 
 group.bindPopup('Общий попап');
 group.setStyle({ color: '#e11d48' }); // для векторных дочерних слоёв
+
+map.fitBounds(group.getBounds()); // общие границы всех дочерних объектов
 ```
 
 `LayerGroup` группирует слои, `FeatureGroup` дополнительно передаёт детям
-попапы, tooltip-ы и стили.
+попапы, tooltip-ы и стили и умеет возвращать общие границы (`getBounds()`).
+Метод же доступен у `GeoJSONLayer`.
 
 ### Контролы
 

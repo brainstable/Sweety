@@ -109,6 +109,66 @@ function flatten(layers) {
 }
 
 describe('GeoJSONLayer', () => {
+  it('returns bounds of all features, including nested groups', () => {
+    const { map } = setup();
+    const geo = new GeoJSONLayer({
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [30, 50],
+                [40, 50],
+                [40, 60],
+                [30, 60],
+                [30, 50],
+              ],
+            ],
+          },
+        },
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'Point', coordinates: [70, 80] },
+        },
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'MultiPolygon',
+            coordinates: [
+              [
+                [
+                  [-20, -10],
+                  [-10, -10],
+                  [-10, 0],
+                  [-20, 0],
+                  [-20, -10],
+                ],
+              ],
+            ],
+          },
+        },
+      ],
+    }).addTo(map);
+
+    const bounds = geo.getBounds();
+    expect(bounds.isValid()).toBe(true);
+    expect(bounds.getSouth()).toBeCloseTo(-10, 9);
+    expect(bounds.getNorth()).toBeCloseTo(80, 9);
+    expect(bounds.getWest()).toBeCloseTo(-20, 9);
+    expect(bounds.getEast()).toBeCloseTo(70, 9);
+
+    expect(
+      new GeoJSONLayer({ type: 'FeatureCollection', features: [] }).getBounds().isValid(),
+    ).toBe(false);
+    map.remove();
+  });
+
   it('parses every common geometry type into native layers', () => {
     const { map } = setup();
     const geo = new GeoJSONLayer(data).addTo(map);
