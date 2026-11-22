@@ -17,6 +17,14 @@ const ICONS = {
     '<rect x="4" y="5" width="16" height="14" rx="1"/><circle cx="4" cy="5" r="1.5" fill="currentColor"/><circle cx="20" cy="19" r="1.5" fill="currentColor"/>',
   check: '<path d="M4 12l5 5L20 6"/>',
   close: '<path d="M5 5l14 14M19 5L5 19"/>',
+  merge:
+    '<circle cx="8.5" cy="12" r="4.5"/><circle cx="15.5" cy="12" r="4.5"/><path d="M12 7.5v9"/>',
+  union:
+    '<path d="M3 6h9v12H3z"/><path d="M12 6h9v12h-9z"/><path d="M12 6v12" stroke-dasharray="1.5 2.5"/>',
+  hole: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.2"/>',
+  cut: '<circle cx="6" cy="6.5" r="2.4"/><circle cx="6" cy="17.5" r="2.4"/><path d="M8.2 7.9L20 16M8.2 16.1L20 8"/>',
+  explode:
+    '<path d="M3 10h6v6H3z"/><path d="M15 8h6v6h-6z"/><path d="M9 12h3"/><path d="M12 9.5L14.5 12 12 14.5"/>',
   vertices:
     '<circle cx="6" cy="18" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="16" r="2"/><path d="M6 18l6-13 7 11"/>',
 };

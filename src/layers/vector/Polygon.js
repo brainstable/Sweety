@@ -1,10 +1,15 @@
 import { Polyline, normalizeLatLngs } from './Polyline.js';
 import { Bounds } from '../../core/Bounds.js';
+import { groupRings } from '../../geo/rings.js';
 import { extend } from '../../util/index.js';
 
 /**
  * Полигон с заливкой. Несколько колец трактуются как один полигон с отверстиями
  * и отрисовываются по правилу заливки even-odd.
+ *
+ * Кольца хранятся плоско, поэтому при экспорте в GeoJSON они группируются по
+ * вложенности: несколько несвязанных контуров дают `MultiPolygon`, а вложенные —
+ * `Polygon` с отверстиями.
  */
 export class Polygon extends Polyline {
   /**
@@ -52,11 +57,22 @@ export class Polygon extends Polyline {
 
   /** @returns {object} */
   toGeoJSON() {
-    const rings = this._latlngs.map((ring) => ring.map((latlng) => [latlng.lng, latlng.lat]));
+    const rings = this._latlngs.map((ring) =>
+      ring.map((latlng) => ({ x: latlng.lng, y: latlng.lat })),
+    );
+    const groups = groupRings(rings);
+    const coordinates = (group) =>
+      [group.outer, ...group.holes].map((ring) => ring.map(({ x, y }) => [x, y]));
+
+    const geometry =
+      groups.length > 1
+        ? { type: 'MultiPolygon', coordinates: groups.map(coordinates) }
+        : { type: 'Polygon', coordinates: groups.length ? coordinates(groups[0]) : [] };
+
     return {
       type: 'Feature',
       properties: this.feature?.properties ? { ...this.feature.properties } : {},
-      geometry: { type: 'Polygon', coordinates: rings },
+      geometry,
     };
   }
 }

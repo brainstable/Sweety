@@ -199,6 +199,7 @@
         <span><code>Enter</code> / двойной клик — завершить</span>
         <span><code>Esc</code> — отменить вершину/черновик</span>
         <span><code>Ctrl+Z</code> / <code>Ctrl+Shift+Z</code> — undo/redo</span>
+        <span>Вторая группа кнопок — мультиобъект, границы, отверстие и разрез</span>
       </div>
       <div id="log" aria-live="polite"></div>
     </aside>
@@ -250,6 +251,27 @@
 
       new Marker([55.7525, 37.6237]).addTo(map).bindPopup('Маркер: перетаскивается за иконку');
 
+      // Два квартала с общей границей: их можно объединить по границам или в мультиобъект.
+      const blockLeft = new Polygon([
+        [
+          [55.7338, 37.5985],
+          [55.7338, 37.6065],
+          [55.7405, 37.6065],
+          [55.7405, 37.5985],
+        ],
+      ]).addTo(map);
+      blockLeft.bindPopup('Левый квартал: общая граница с правым');
+
+      const blockRight = new Polygon([
+        [
+          [55.7338, 37.6065],
+          [55.7338, 37.6145],
+          [55.7405, 37.6145],
+          [55.7405, 37.6065],
+        ],
+      ]).addTo(map);
+      blockRight.bindPopup('Правый квартал: выделите оба и нажмите «Объединить по границам»');
+
       const logElement = document.getElementById('log');
       const log = (type, details = '') => {
         const line = document.createElement('div');
@@ -267,6 +289,11 @@
           select: 'Выбрать',
           edit: 'Редактировать',
           delete: 'Удалить',
+          merge: 'Объединить в мультиобъект',
+          union: 'Объединить по границам',
+          explode: 'Разъединить объект',
+          addHole: 'Добавить отверстие',
+          cut: 'Разрезать линией',
           drawPolygon: 'Полигон',
           drawPolyline: 'Линия',
           drawMarker: 'Маркер',
@@ -276,10 +303,14 @@
           cancel: 'Отмена',
           hintPolygon: 'Клик — вершина, клик по первой — замыкание, Enter — готово',
           hintPolyline: 'Клик — вершина, Enter или двойной клик — готово',
+          hintHole: 'Нарисуйте отверстие внутри полигона, Enter — готово',
+          hintCut: 'Проведите секущую линию через выбранные объекты, Enter — разрезать',
         },
       });
 
-      [polygon, line, circle, rectangle].forEach((layer) => editor.enableEdit(layer));
+      [polygon, line, circle, rectangle, blockLeft, blockRight].forEach((layer) =>
+        editor.enableEdit(layer),
+      );
 
       editor.on('modechange', ({ mode, previousMode }) =>
         log('modechange', `${previousMode} → ${mode}`),
@@ -297,9 +328,24 @@
       editor.on('selfintersection', ({ layer }) =>
         log('selfintersection', layer.toGeoJSON().geometry.type),
       );
-      editor.on('draw:started', ({ type }) => log('draw:started', type));
+      editor.on('draw:started', ({ type, intent }) => log('draw:started', `${type} · ${intent}`));
       editor.on('draw:completed', ({ type }) => log('draw:completed', type));
       editor.on('draw:canceled', ({ type, reason }) => log('draw:canceled', `${type} · ${reason}`));
+
+      editor.on('merge', ({ layer, sources }) =>
+        log('merge', `${sources.length} → ${layer.toGeoJSON().geometry.type}`),
+      );
+      editor.on('explode', ({ layers }) => log('explode', `${layers.length} объектов`));
+      editor.on('union', ({ layer, rings }) =>
+        log('union', `${layer.toGeoJSON().geometry.type} · колец: ${rings}`),
+      );
+      editor.on('cut', ({ layers }) => log('cut', `частей: ${layers.length}`));
+      editor.on('hole:added', ({ layer, holes }) =>
+        log('hole:added', `колец: ${layer.getLatLngs().length}, отверстий: ${holes}`),
+      );
+      for (const name of ['merge:invalid', 'union:invalid', 'cut:invalid', 'hole:invalid']) {
+        editor.on(name, ({ reason }) => log(name, reason));
+      }
 
       window.editor = editor;
       window.map = map;

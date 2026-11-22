@@ -284,6 +284,32 @@ export function translateSnapshot(map, snapshot, delta) {
 }
 
 /**
+ * Проецирует кольца в плоскость карты: операции над геометрией выполняются в
+ * пиксельных координатах одной проекции, поэтому не зависят от широты.
+ * @param {any} map
+ * @param {LatLng[][]} rings
+ * @returns {Array<Array<{x:number,y:number}>>}
+ */
+export function ringsToXY(map, rings) {
+  return rings.map((ring) =>
+    ring.map((latlng) => {
+      const point = map.project(latlng);
+      return { x: point.x, y: point.y };
+    }),
+  );
+}
+
+/**
+ * Обратное преобразование плоскостных колец в координаты карты.
+ * @param {any} map
+ * @param {Array<Array<{x:number,y:number}>>} rings
+ * @returns {LatLng[][]}
+ */
+export function xyToRings(map, rings) {
+  return rings.map((ring) => ring.map(({ x, y }) => map.unproject(new Point(x, y))));
+}
+
+/**
  * Середина сегмента в экранном пространстве. Такая середина визуально совпадает
  * с линией при любом уровне масштаба.
  * @param {any} map

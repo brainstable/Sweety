@@ -56,6 +56,11 @@ map.edit(); // editor
 - Режимы `idle / select / edit / create / delete` с событием `modechange`.
 - Вершины, середины сегментов, перетаскивание тела геометрии.
 - Маркер, полилиния, полигон (включая отверстия), круг, прямоугольник.
+- Мультиобъекты: объединение нескольких полигонов или линий в один объект и
+  обратное разъединение на отдельные объекты.
+- Отверстия в полигонах: рисование, проверка вложенности и удаление кольца.
+- Разрезание полигонов и линий секущей линией, в том числе по отверстиям.
+- Объединение полигонов по общим границам (растворение общей границы).
 - GeoJSON `MultiPolygon`, `MultiLineString`, `GeometryCollection` и
   произвольные `FeatureGroup`: редактирование всех частей как одной группы.
 - Рисование с ghost-предпросмотром, завершением по `Enter` / двойному клику /
@@ -77,6 +82,7 @@ EditPlugin ───────────────────────
 ├── EditMode                  конечный автомат режимов                    │
 ├── EditSession               вершины и геометрия одного листового слоя    │
 │   └── GroupEditSession      агрегирует части MultiPolygon/FeatureGroup   │
+├── Operations                планарная геометрия: разрез, dissolve, кольца│
 ├── CommandStack              undo/redo                                    │
 │   ├── GeometryCommand       MoveVertex / AddVertex / DeleteVertex / ...  │
 │   ├── CreateLayerCommand    добавление слоя                              │
@@ -109,6 +115,7 @@ packages/map-edit-plugin/
 │   ├── i18n.js                  строки и интерполяция
 │   ├── core/
 │   │   ├── GeometryUtils.js     геометрия, снимки, самопересечения
+│   │   ├── Operations.js        разрез, dissolve, вложенность колец
 │   │   ├── EditSession.js       сессии одного слоя и группы
 │   │   ├── Command.js           команды
 │   │   └── CommandStack.js      undo/redo
@@ -168,6 +175,13 @@ editor.clearSelection();
 | `startDrawing(type, options?)`                  | `marker`, `polyline`, `polygon`, `circle`, `rectangle` |
 | `finishDrawing()` / `cancelDrawing()`           | завершить/отменить черновик                            |
 | `isDrawing()` / `getDrawType()`                 | состояние рисования                                    |
+| `canMerge()` / `mergeSelected()`                | мультиобъект из выбранных полигонов или линий          |
+| `canExplode()` / `explodeSelected()`            | разъединить мультиобъект на отдельные объекты          |
+| `canAddHole()` / `startHole(layer?)`            | нарисовать отверстие в полигоне                        |
+| `addHole(layer, ring)` / `removeHole(layer, i)` | добавить/убрать отверстие программно                   |
+| `canCut()` / `startCut()`                       | разрезание секущей линией                              |
+| `cutLayers(layers, cutter)`                     | разрезать объекты готовой линией                       |
+| `canUnion()` / `unionSelected()`                | объединить полигоны по общим границам                  |
 | `deleteLayer(layer)`                            | удалить слой (с учётом `confirmDelete`)                |
 | `deleteSelected()`                              | удалить выбранные                                      |
 | `undo()` / `redo()` / `canUndo()` / `canRedo()` | история                                                |
@@ -191,6 +205,16 @@ editor.clearSelection();
 | `draw:completed`   | `{ layer, type, parent? }`                    |
 | `draw:canceled`    | `{ type, reason }`                            |
 | `draw:invalid`     | `{ type, reason }`                            |
+| `merge`            | `{ layer, sources, family, command }`         |
+| `merge:invalid`    | `{ layers, reason }`                          |
+| `explode`          | `{ layer, layers, command }`                  |
+| `union`            | `{ layer, sources, rings, command }`          |
+| `union:invalid`    | `{ layers, reason }`                          |
+| `cut`              | `{ layers, sources, cutter, command }`        |
+| `cut:invalid`      | `{ layer?, layers, reason }`                  |
+| `hole:added`       | `{ layer, holes }`                            |
+| `hole:removed`     | `{ layer, index }`                            |
+| `hole:invalid`     | `{ layer, reason }`                           |
 | `selfintersection` | `{ layer, rings: [{ ring, intersections }] }` |
 | `vertexlimit`      | `{ layer, handle }`                           |
 | `undo` / `redo`    | `{ command }`                                 |
@@ -198,7 +222,8 @@ editor.clearSelection();
 
 `update` отправляется один раз после завершения жеста (на `pointerup`), а не на
 каждый `pointermove`. `action` — `move-vertex`, `insert-vertex`,
-`delete-vertex:*`, `move-layer`, `undo`, `redo`.
+`delete-vertex:*`, `move-layer`, `add-hole`, `remove-hole`, `merge`, `union`,
+`cut`, `explode`, `undo`, `redo`.
 
 События `draw:*` дополняют историю: `create` приходит после `draw:completed`.
 
@@ -295,6 +320,81 @@ editor.startDrawing('polygon', { target: featureGroup });
 По умолчанию созданный слой добавляется на карту, включается в редактирование и
 выделяется. `target` позволяет складывать результаты в `FeatureGroup` или
 `GeoJSONLayer`.
+
+## Мультиобъекты и операции над геометрией
+
+Вторая группа кнопок панели работает с уже нарисованными объектами. Каждая
+операция заменяет исходные слои результатом и отменяется одной командой отмены.
+
+### Мультиобъект
+
+Объединение доступно для двух и более объектов одного семейства: полигоны
+(включая прямоугольники) дают `MultiPolygon`, полилинии — `MultiLineString`.
+Части остаются одним слоем: вершины редактируются все сразу, тело
+перетаскивается целиком.
+
+```js
+editor.selectLayer(first);
+editor.selectLayer(second, true);
+editor.mergeSelected(); // один слой с двумя контурами
+editor.explodeSelected(); // обратно два отдельных объекта
+```
+
+Несвязанные контуры экспортируются корректно: `layer.toGeoJSON()` вернёт
+`MultiPolygon`, а не `Polygon`, у которого второй контур выглядел бы отверстием.
+
+### Отверстия
+
+```js
+editor.addHole(polygon, ring); // ring: LatLng[]
+editor.removeHole(polygon, 1); // 0 — внешнее кольцо
+editor.startHole(); // нарисовать отверстие в выбранном полигоне
+```
+
+Отверстие проверяется: оно должно лежать внутри полигона и не пересекать его
+границу, иначе приходит `hole:invalid` с причиной `outside` или `crosses`.
+
+### Разрезание
+
+`startCut()` переводит редактор в режим черчения секущей: проведите линию через
+выбранные объекты и нажмите `Enter`. Полигон делится на две части, полилиния —
+на части по точкам пересечения, а отверстия, через которые прошла линия, делятся
+вместе с полигоном. Объект, который линия не задела, остаётся как был.
+
+```js
+const parts = editor.cutLayers(
+  [polygon],
+  [
+    [55.74, 37.6],
+    [55.74, 37.63],
+  ],
+);
+```
+
+### Объединение по общим границам
+
+```js
+editor.selectLayer(left);
+editor.selectLayer(right, true);
+editor.unionSelected();
+```
+
+Общая граница исчезает, остаётся один контур, отверстия сохраняются. Операция
+рассчитана на примыкающие объекты: если полигоны накладываются друг на друга,
+приходит `union:invalid` с причиной `overlap` — для наложения нужны логические
+операции над областями, а не растворение границ.
+
+### Какие операции доступны
+
+```js
+editor.canMerge(); // ≥ 2 объекта одного семейства
+editor.canUnion(); // ≥ 2 полигона
+editor.canAddHole(); // ровно один полигон
+editor.canCut(); // есть что резать
+editor.canExplode(); // у объекта больше одной части
+```
+
+Кнопки панели включаются и выключаются по этим же проверкам.
 
 ## Undo/redo и команды
 
@@ -393,7 +493,8 @@ new EditPlugin(map, {
 
 Ключи: `toolbar`, `select`, `edit`, `delete`, `undo`, `redo`, `drawMarker`,
 `drawPolyline`, `drawPolygon`, `drawCircle`, `drawRectangle`, `finish`,
-`cancel`, `hint*`, `vertices`, `selected`, `confirmDelete`, `vertexLimit`.
+`cancel`, `merge`, `union`, `explode`, `addHole`, `cut`, `hint*`, `vertices`,
+`selected`, `confirmDelete`, `vertexLimit`.
 
 ## Крайние случаи и производительность
 
@@ -431,9 +532,10 @@ ES-модули по `file://`. Вместо пустой страницы де�
 Если модуль не загрузился через сервер, демо выводит причину ошибки со ссылкой
 на консоль браузера и терминал Vite.
 
-Тесты покрывают `GeometryUtils`, `CommandStack`, создание/редактирование
-полигонов, drag вершин и тела, midpoint, круг, прямоугольник, GeoJSON-группы,
-удаление, undo/redo, клавиатуру, snap, самопересечения и очистку при `destroy()`.
+Тесты покрывают `GeometryUtils`, `Operations`, `CommandStack`, создание и
+редактирование полигонов, drag вершин и тела, midpoint, круг, прямоугольник,
+GeoJSON-группы, удаление, undo/redo, клавиатуру, snap, самопересечения, операции
+над готовой геометрией и очистку при `destroy()`.
 
 Пакет собирается с `peerDependencies: { "sweety-map": "^0.1.0" }`: ядро не
 бандлится. Внешний вид подключается отдельным файлом `map-edit-plugin.css`.

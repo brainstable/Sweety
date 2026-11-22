@@ -27,3 +27,4 @@ export { EditControl } from './control/EditControl.js';
 export { DrawToolbar } from './control/DrawToolbar.js';
 export { DEFAULT_I18N, interpolate, translate } from './i18n.js';
 export * as GeometryUtils from './core/GeometryUtils.js';
+export * as Operations from './core/Operations.js';

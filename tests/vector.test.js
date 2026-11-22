@@ -141,6 +141,46 @@ describe('Polygon', () => {
     expect(polygon.toGeoJSON().geometry.type).toBe('Polygon');
     map.remove();
   });
+
+  it('exports disjoint rings as MultiPolygon and nested rings as holes', () => {
+    const polygon = new Polygon([
+      [
+        [0, 0],
+        [0, 10],
+        [10, 10],
+        [10, 0],
+      ],
+      [
+        [2, 2],
+        [2, 4],
+        [4, 4],
+        [4, 2],
+      ],
+      [
+        [20, 20],
+        [20, 30],
+        [30, 30],
+        [30, 20],
+      ],
+    ]);
+
+    const json = polygon.toGeoJSON();
+    expect(json.geometry.type).toBe('MultiPolygon');
+    expect(json.geometry.coordinates).toHaveLength(2);
+    // Первый контур — с отверстием, второй — самостоятельный.
+    expect(json.geometry.coordinates[0]).toHaveLength(2);
+    expect(json.geometry.coordinates[1]).toHaveLength(1);
+
+    // Одно внешнее кольцо остаётся обычным Polygon.
+    const simple = new Polygon([
+      [
+        [0, 0],
+        [0, 1],
+        [1, 1],
+      ],
+    ]);
+    expect(simple.toGeoJSON().geometry.type).toBe('Polygon');
+  });
 });
 
 describe('Circle and Rectangle', () => {

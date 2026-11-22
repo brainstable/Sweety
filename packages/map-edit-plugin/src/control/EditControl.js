@@ -10,6 +10,11 @@ const ACTION_ICONS = {
   delete: 'trash',
   undo: 'undo',
   redo: 'redo',
+  merge: 'merge',
+  union: 'union',
+  explode: 'explode',
+  hole: 'hole',
+  cut: 'cut',
   'draw:marker': 'marker',
   'draw:polyline': 'polyline',
   'draw:polygon': 'polygon',
@@ -23,12 +28,20 @@ const ACTION_LABELS = {
   delete: 'delete',
   undo: 'undo',
   redo: 'redo',
+  merge: 'merge',
+  union: 'union',
+  explode: 'explode',
+  hole: 'addHole',
+  cut: 'cut',
   'draw:marker': 'drawMarker',
   'draw:polyline': 'drawPolyline',
   'draw:polygon': 'drawPolygon',
   'draw:circle': 'drawCircle',
   'draw:rectangle': 'drawRectangle',
 };
+
+/** Действия над готовой геометрией: идут отдельной секцией панели. */
+const OPERATIONS = ['merge', 'union', 'explode', 'hole', 'cut'];
 
 /** Минимальная высота панели: ниже неё инструменты переносятся в новый столбец. */
 const MIN_TOOLBAR_HEIGHT = 160;
@@ -69,22 +82,15 @@ export class EditControl extends Control {
     container.setAttribute('aria-label', this._t('toolbar'));
     container.classList.add('map-edit-control');
 
-    let previousWasDraw = false;
-    for (const action of this.actions) {
-      if (action === 'undo' || action === 'redo') continue;
-      const isDraw = action.startsWith('draw:');
-      if (isDraw && !previousWasDraw && this._buttons.length) this._appendSeparator(container);
-      const button = this._makeButton(action);
-      if (button) container.appendChild(button);
-      previousWasDraw = isDraw;
-    }
-    if (this.actions.includes('undo') || this.actions.includes('redo')) {
-      this._appendSeparator(container);
-    }
-    for (const action of ['undo', 'redo']) {
-      if (!this.actions.includes(action)) continue;
-      const button = this._makeButton(action);
-      if (button) container.appendChild(button);
+    let first = true;
+    for (const section of this._sections()) {
+      if (!section.length) continue;
+      if (!first) this._appendSeparator(container);
+      first = false;
+      for (const action of section) {
+        const button = this._makeButton(action);
+        if (button) container.appendChild(button);
+      }
     }
 
     container.addEventListener('click', this._onClick);
@@ -166,6 +172,23 @@ export class EditControl extends Control {
     if (container.style.maxHeight !== next) container.style.maxHeight = next;
   }
 
+  /**
+   * Делит список действий на секции: базовые, рисование, операции, история.
+   * Порядок внутри секции сохраняется таким, каким его задал пользователь.
+   * @private
+   * @returns {string[][]}
+   */
+  _sections() {
+    const sections = { basic: [], draw: [], operations: [], history: [] };
+    for (const action of this.actions) {
+      if (action === 'undo' || action === 'redo') sections.history.push(action);
+      else if (action.startsWith('draw:')) sections.draw.push(action);
+      else if (OPERATIONS.includes(action)) sections.operations.push(action);
+      else sections.basic.push(action);
+    }
+    return [sections.basic, sections.draw, sections.operations, sections.history];
+  }
+
   /** @private */
   _makeButton(action) {
     const label = ACTION_LABELS[action];
@@ -200,6 +223,11 @@ export class EditControl extends Control {
     const action = button.dataset.action;
     if (action === 'undo') this.plugin.undo();
     else if (action === 'redo') this.plugin.redo();
+    else if (action === 'merge') this.plugin.mergeSelected();
+    else if (action === 'union') this.plugin.unionSelected();
+    else if (action === 'explode') this.plugin.explodeSelected();
+    else if (action === 'hole') this.plugin.startHole();
+    else if (action === 'cut') this.plugin.startCut();
     else if (action.startsWith('draw:')) this.plugin.startDrawing(action.slice(5));
     else this.plugin.setMode(action);
     this.refresh();
@@ -219,6 +247,11 @@ export class EditControl extends Control {
       button.setAttribute('aria-pressed', active ? 'true' : 'false');
       if (action === 'undo') button.disabled = !this.plugin.canUndo();
       else if (action === 'redo') button.disabled = !this.plugin.canRedo();
+      else if (action === 'merge') button.disabled = !this.plugin.canMerge();
+      else if (action === 'union') button.disabled = !this.plugin.canUnion();
+      else if (action === 'explode') button.disabled = !this.plugin.canExplode();
+      else if (action === 'hole') button.disabled = !this.plugin.canAddHole();
+      else if (action === 'cut') button.disabled = !this.plugin.canCut();
     }
   }
 

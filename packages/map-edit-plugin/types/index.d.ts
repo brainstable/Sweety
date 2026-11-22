@@ -173,7 +173,17 @@ export interface UpdateEvent extends EditEvent {
 
 export interface DrawEvent extends EditEvent {
   drawType: 'marker' | 'polyline' | 'polygon' | 'circle' | 'rectangle';
+  intent?: 'create' | 'hole' | 'cut';
   parent?: any;
+  reason?: string;
+}
+
+/** События операций над готовой геометрией. */
+export interface GeometryOperationEvent extends EditEvent {
+  /** Исходные слои, которые заменены результатом. */
+  sources?: any[];
+  command?: Command;
+  /** Причина отказа: `selection`, `crossings`, `overlap`, `open-boundary`, ... */
   reason?: string;
 }
 
@@ -328,9 +338,21 @@ export declare class BodyDragHandler extends EditHandler {
 }
 
 export declare class DrawHandler extends EditHandler {
-  constructor(plugin: EditPlugin, type: string, options?: { target?: any });
+  constructor(
+    plugin: EditPlugin,
+    type: string,
+    options?: {
+      target?: any;
+      intent?: 'create' | 'hole' | 'cut';
+      holeTarget?: any;
+      cutTargets?: any[];
+    },
+  );
   type: 'marker' | 'polyline' | 'polygon' | 'circle' | 'rectangle';
+  intent: 'create' | 'hole' | 'cut';
   target: any;
+  holeTarget: any;
+  cutTargets: any[] | null;
   vertices: LatLngLike[];
   cursor: LatLngLike | null;
   first: LatLngLike | null;
@@ -401,6 +423,22 @@ export declare class EditPlugin {
   cancelDrawing(): boolean;
   getDrawType(): string | null;
   isDrawing(): boolean;
+  canMerge(layers?: any[] | any): boolean;
+  mergeSelected(layers?: any[] | any): any | null;
+  mergeLayers(layers?: any[] | any): any | null;
+  canExplode(layer?: any): boolean;
+  explodeSelected(layer?: any): any[];
+  explodeLayer(layer?: any): any[];
+  canAddHole(layer?: any): boolean;
+  addHole(layer: any, ring: LatLngLike[]): boolean;
+  removeHole(layer: any, index: number): boolean;
+  startHole(layer?: any): DrawHandler | null;
+  canCut(layers?: any[] | any): boolean;
+  startCut(options?: { layers?: any[] }): DrawHandler | null;
+  cutLayers(layers: any[] | any, cutter: LatLngLike[]): any[];
+  canUnion(layers?: any[] | any): boolean;
+  unionSelected(layers?: any[] | any): any | null;
+  unionLayers(layers?: any[] | any): any | null;
   deleteLayer(layer: any): boolean;
   deleteSelected(): number;
   canUndo(): boolean;
@@ -468,6 +506,50 @@ export declare namespace GeometryUtils {
   ): boolean;
   function ringArea(ring: LatLngLike[]): number;
   function minimumVertices(kind: string, fallback?: number): number;
+  function ringsToXY(map: EditMap, rings: LatLngLike[][]): PointLike[][];
+  function xyToRings(map: EditMap, rings: PointLike[][]): LatLngLike[][];
+}
+
+export interface OperationXY {
+  x: number;
+  y: number;
+}
+
+/**
+ * Планарные операции над геометрией: разрезание, объединение по общим
+ * границам, вложенность колец. Координаты — точки `{x, y}` в одной плоскости
+ * (обычно `map.project`).
+ */
+export declare namespace Operations {
+  type XY = OperationXY;
+  type XYRing = XY[];
+
+  function segmentIntersection(
+    p1: XY,
+    p2: XY,
+    p3: XY,
+    p4: XY,
+  ): { t: number; u: number; point: XY } | null;
+  function pointInRing(point: XY, ring: XYRing): boolean;
+  function ringArea(ring: XYRing): number;
+  function interiorPoint(ring: XYRing): XY | null;
+  function ringProbePoint(ring: XYRing): XY | null;
+  function ringContainsRing(outer: XYRing, inner: XYRing): boolean;
+  function ringDepths(rings: XYRing[]): number[];
+  function classifyRings(rings: XYRing[]): Array<{ outer: XYRing; holes: XYRing[] }>;
+  function pointInPolygonRings(point: XY, rings: XYRing[]): boolean;
+  function validateHole(
+    rings: XYRing[],
+    hole: XYRing,
+  ): 'empty' | 'self-intersection' | 'outside' | 'crosses' | null;
+  function countCrossings(ring: XYRing, cutter: XYRing): number;
+  function splitRingByLine(ring: XYRing, cutter: XYRing): { rings: [XYRing, XYRing] } | null;
+  function splitPolygonByLine(rings: XYRing[], cutter: XYRing): [XYRing[], XYRing[]] | null;
+  function splitPolylineByLine(parts: XYRing[], cutter: XYRing): XYRing[] | null;
+  function dissolveRings(
+    rings: XYRing[],
+    options?: { tolerance?: number },
+  ): { rings: XYRing[]; error?: undefined } | { error: 'overlap' | 'open-boundary' | 'empty' };
 }
 
 export default EditPlugin;

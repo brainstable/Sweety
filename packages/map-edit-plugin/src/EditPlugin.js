@@ -1,21 +1,34 @@
-import { DomUtil, Evented, Point, Util } from 'sweety-map';
+import { DomUtil, Evented, Point, Polygon, Polyline, Util } from 'sweety-map';
 import { EditMode, isEditMode } from './EditMode.js';
 import { DEFAULT_I18N, translate } from './i18n.js';
 import {
   closestPointOnSegment,
+  cloneLatLng,
   findSelfIntersections,
   getLayerKind,
   getLayerVertices,
   getRings,
   pointAtDistance,
   pointInRing,
+  ringsToXY,
+  snapshotGeometry,
+  xyToRings,
 } from './core/GeometryUtils.js';
+import {
+  classifyRings,
+  dissolveRings,
+  splitPolygonByLine,
+  splitPolylineByLine,
+  validateHole,
+} from './core/Operations.js';
 import { CommandStack } from './core/CommandStack.js';
 import {
   AddVertexCommand,
+  CompositeCommand,
   CreateLayerCommand,
   DeleteLayerCommand,
   DeleteVertexCommand,
+  GeometryCommand,
   MoveLayerCommand,
   MoveVertexCommand,
 } from './core/Command.js';
@@ -38,12 +51,17 @@ export const DEFAULT_OPTIONS = {
   modes: [
     'select',
     'edit',
+    'delete',
     'draw:marker',
     'draw:polyline',
     'draw:polygon',
     'draw:circle',
     'draw:rectangle',
-    'delete',
+    'merge',
+    'union',
+    'hole',
+    'cut',
+    'explode',
     'undo',
     'redo',
   ],
@@ -577,6 +595,45 @@ export class EditPlugin extends Evented {
    * @returns {DrawHandler}
    */
   startDrawing(type, options = {}) {
+    return this._startDrawSession(type, { ...options, intent: 'create' });
+  }
+
+  /**
+   * Рисует отверстие внутри полигона. Пользователь ставит вершины, как у
+   * обычного полигона, но результат не создаёт новый слой, а становится
+   * кольцом-отверстием выбранного объекта.
+   * @param {any} [layer] полигон; по умолчанию — единственный выбранный
+   * @returns {DrawHandler|null}
+   */
+  startHole(layer) {
+    const target = layer || this._singlePolygon();
+    if (!target || getLayerKind(target) !== 'polygon') {
+      this.fire('hole:invalid', { layer: target || null, reason: 'selection' });
+      return null;
+    }
+    return this._startDrawSession('polygon', { intent: 'hole', holeTarget: target });
+  }
+
+  /**
+   * Запускает разрезание: пользователь чертит секущую линию, а выбранные
+   * объекты делятся ею на части.
+   * @param {{layers?: any[]}} [options]
+   * @returns {DrawHandler|null}
+   */
+  startCut(options = {}) {
+    const targets = this._operationLeaves(options.layers).filter((layer) => {
+      const kind = getLayerKind(layer);
+      return kind === 'polygon' || kind === 'polyline' || kind === 'rectangle';
+    });
+    if (!targets.length) {
+      this.fire('cut:invalid', { layers: [], reason: 'selection' });
+      return null;
+    }
+    return this._startDrawSession('polyline', { intent: 'cut', cutTargets: targets });
+  }
+
+  /** @private */
+  _startDrawSession(type, options) {
     if (this._destroyed) throw new Error('EditPlugin is destroyed');
     if (this._draw) this._cancelDrawing(this._draw, 'replaced', { silentMode: true });
     if (this._mode.mode !== 'create') this.setMode('create');
@@ -629,6 +686,15 @@ export class EditPlugin extends Evented {
     this._draw = null;
     this._removeDrawUi();
 
+    if (handler.intent === 'hole') {
+      this._completeHole(handler, layer);
+      return;
+    }
+    if (handler.intent === 'cut') {
+      this._completeCut(handler, layer);
+      return;
+    }
+
     const parent =
       handler.target &&
       typeof handler.target.addLayer === 'function' &&
@@ -652,6 +718,25 @@ export class EditPlugin extends Evented {
     this.setMode('select');
     this.enableEdit(parent || layer);
     this.selectLayer(parent || layer, false);
+    this._refreshAll();
+  }
+
+  /** @private */
+  _completeHole(handler, contour) {
+    const target = handler.holeTarget;
+    const ring = getRings(contour)[0] || [];
+    const added = this.addHole(target, ring);
+    this.setMode(added ? 'edit' : 'select');
+    if (added && this.map.hasLayer(target)) this._selectAll([target]);
+    this._refreshAll();
+  }
+
+  /** @private */
+  _completeCut(handler, cutterLayer) {
+    const cutter = getRings(cutterLayer)[0] || [];
+    const created = this.cutLayers(handler.cutTargets, cutter);
+    this.setMode(created.length ? 'edit' : 'select');
+    if (created.length) this._selectAll(created);
     this._refreshAll();
   }
 
@@ -682,13 +767,18 @@ export class EditPlugin extends Evented {
   /** @private */
   _updateDrawToolbar(handler) {
     if (!this._toolbar) return;
-    const key = {
-      marker: 'hintMarker',
-      polyline: 'hintPolyline',
-      polygon: 'hintPolygon',
-      circle: 'hintCircle',
-      rectangle: 'hintRectangle',
-    }[handler.type];
+    const key =
+      handler.intent === 'hole'
+        ? 'hintHole'
+        : handler.intent === 'cut'
+          ? 'hintCut'
+          : {
+              marker: 'hintMarker',
+              polyline: 'hintPolyline',
+              polygon: 'hintPolygon',
+              circle: 'hintCircle',
+              rectangle: 'hintRectangle',
+            }[handler.type];
     let hint = this.t(key);
     if (handler.type === 'polyline' || handler.type === 'polygon') {
       hint += ` · ${this.t('vertices', { count: handler.vertices.length })}`;
@@ -713,6 +803,423 @@ export class EditPlugin extends Evented {
       style = drawStyle[type] && typeof drawStyle[type] === 'object' ? drawStyle[type] : drawStyle;
     }
     return { ...base, ...this.options.layerOptions, ...style };
+  }
+
+  /* ----------------------------------------------------------------------- *
+   * Мультиобъекты, отверстия, разрезание и объединение
+   * ----------------------------------------------------------------------- */
+
+  /** @private */
+  _operationLeaves(layers) {
+    const source =
+      layers === null || layers === undefined
+        ? this.getSelected()
+        : Array.isArray(layers)
+          ? layers
+          : [layers];
+    const leaves = [];
+    const seen = new Set();
+    for (const layer of source) {
+      if (!layer) continue;
+      if (getLayerKind(layer) === 'group') {
+        for (const leaf of collectEditableLeaves(layer)) {
+          if (seen.has(stamp(leaf))) continue;
+          seen.add(stamp(leaf));
+          leaves.push(leaf);
+        }
+        continue;
+      }
+      if (!getLayerKind(layer) || seen.has(stamp(layer))) continue;
+      seen.add(stamp(layer));
+      leaves.push(layer);
+    }
+    return leaves;
+  }
+
+  /** @private */
+  _isPolygonKind(layer) {
+    const kind = getLayerKind(layer);
+    return kind === 'polygon' || kind === 'rectangle';
+  }
+
+  /** @private */
+  _familyOf(layers) {
+    let family = null;
+    for (const layer of layers) {
+      const kind = getLayerKind(layer);
+      const next = this._isPolygonKind(layer) ? 'polygon' : kind === 'polyline' ? 'polyline' : null;
+      if (!next) return null;
+      if (family && family !== next) return null;
+      family = next;
+    }
+    return family;
+  }
+
+  /** @private */
+  _singlePolygon() {
+    const leaves = this._operationLeaves(null);
+    if (leaves.length !== 1) return null;
+    return getLayerKind(leaves[0]) === 'polygon' ? leaves[0] : null;
+  }
+
+  /** @private */
+  _inheritStyle(layer) {
+    if (layer && typeof layer.getStyle === 'function') return { ...layer.getStyle() };
+    return layer && layer.options ? { ...layer.options } : {};
+  }
+
+  /** @private */
+  _inheritFeature(target, source) {
+    if (!target || !source || !source.feature) return;
+    target.feature = {
+      ...source.feature,
+      properties: { ...(source.feature.properties || {}) },
+    };
+  }
+
+  /** @private */
+  _replacementParent(removed) {
+    for (const layer of removed) {
+      const parent = this._parentGroup(layer);
+      if (parent) return parent;
+    }
+    const target = this.options.target;
+    return target && typeof target.addLayer === 'function' && this.map.hasLayer(target)
+      ? target
+      : null;
+  }
+
+  /** @private */
+  _selectAll(layers) {
+    const next = [];
+    for (const layer of layers) {
+      if (!layer || this._destroyed) continue;
+      const root = this._resolveSelectionRoot(layer);
+      const selectable = root ? this._ensureSelectable(root, layer) : null;
+      if (selectable && !next.includes(selectable)) next.push(selectable);
+    }
+    this.clearSelection();
+    for (const layer of next) {
+      this._selected.add(layer);
+      this._highlight(layer);
+    }
+    this._refreshAll();
+    if (next.length) {
+      this.fire('select', { layer: next[0], layers: this.getSelected(), additive: false });
+    }
+  }
+
+  /**
+   * Заменяет исходные слои результатом операции одной командой undo/redo.
+   * @private
+   */
+  _applyReplacement(removed, created, { label, action }) {
+    const map = this.map;
+    const parent = this._replacementParent(removed);
+    const commands = [];
+    for (const layer of removed) {
+      commands.push(
+        new DeleteLayerCommand(layer, { map, parent: this._parentGroup(layer), label }),
+      );
+    }
+    for (const layer of created) {
+      commands.push(new CreateLayerCommand(layer, { map, parent, label }));
+    }
+    const command = new CompositeCommand(commands, label);
+    if (this.options.undoRedo) this._stack.push(command);
+    else command.execute();
+
+    const live = created.filter((layer) => map.hasLayer(layer));
+    for (const layer of live) this.enableEdit(layer);
+    this._selectAll(live);
+    this._emitUpdate(live, action, { command });
+    this._refreshAll();
+    return command;
+  }
+
+  /**
+   * Можно ли объединить объекты в мультиобъект: нужно минимум два пути одного
+   * семейства — полигоны (включая прямоугольники) или полилинии.
+   * @param {any[]} [layers]
+   * @returns {boolean}
+   */
+  canMerge(layers) {
+    const leaves = this._operationLeaves(layers);
+    return leaves.length >= 2 && this._familyOf(leaves) !== null;
+  }
+
+  /**
+   * Объединяет объекты в один мультиобъект: `MultiPolygon` для полигонов и
+   * `MultiLineString` для полилиний. Исходные слои удаляются, но всё вместе
+   * отменяется одной командой.
+   * @param {any[]} [layers] по умолчанию — выбранные объекты
+   * @returns {any|null}
+   */
+  mergeSelected(layers) {
+    return this.mergeLayers(layers);
+  }
+
+  /** @param {any[]} [layers] @returns {any|null} */
+  mergeLayers(layers) {
+    const leaves = this._operationLeaves(layers);
+    const family = this._familyOf(leaves);
+    if (leaves.length < 2 || !family) {
+      this.fire('merge:invalid', { layers: leaves, reason: 'selection' });
+      return null;
+    }
+    const rings = leaves.flatMap((layer) => getRings(layer).map((ring) => ring.map(cloneLatLng)));
+    const style = this._inheritStyle(leaves[0]);
+    const merged = family === 'polygon' ? new Polygon(rings, style) : new Polyline(rings, style);
+    this._inheritFeature(merged, leaves[0]);
+
+    const command = this._applyReplacement(leaves, [merged], {
+      label: 'Merge objects',
+      action: 'merge',
+    });
+    this.fire('merge', { layer: merged, sources: leaves, family, command });
+    return merged;
+  }
+
+  /**
+   * Можно ли разъединить мультиобъект: у выбранного объекта больше одной части.
+   * @param {any} [layer]
+   * @returns {boolean}
+   */
+  canExplode(layer) {
+    const leaves = layer ? [layer] : this._operationLeaves(null);
+    if (leaves.length !== 1) return false;
+    const kind = getLayerKind(leaves[0]);
+    if (kind !== 'polygon' && kind !== 'polyline') return false;
+    return getRings(leaves[0]).length > 1;
+  }
+
+  /**
+   * Разъединяет мультиобъект на отдельные объекты: каждое внешнее кольцо вместе
+   * со своими отверстиями становится самостоятельным полигоном, каждая часть
+   * полилинии — отдельной линией.
+   * @param {any} [layer]
+   * @returns {any[]} созданные слои
+   */
+  explodeSelected(layer) {
+    return this.explodeLayer(layer);
+  }
+
+  /** @param {any} [layer] @returns {any[]} */
+  explodeLayer(layer) {
+    const leaves = layer ? [layer] : this._operationLeaves(null);
+    const target = leaves.length === 1 ? leaves[0] : null;
+    if (!target) return [];
+    const kind = getLayerKind(target);
+    if (kind !== 'polygon' && kind !== 'polyline') return [];
+    const rings = getRings(target);
+    if (rings.length < 2) return [];
+
+    const style = this._inheritStyle(target);
+    const created =
+      kind === 'polygon'
+        ? classifyRings(ringsToXY(this.map, rings)).map((group) => {
+            const polygon = new Polygon(xyToRings(this.map, [group.outer, ...group.holes]), style);
+            this._inheritFeature(polygon, target);
+            return polygon;
+          })
+        : rings.map((ring) => {
+            const polyline = new Polyline([ring.map(cloneLatLng)], style);
+            this._inheritFeature(polyline, target);
+            return polyline;
+          });
+    if (created.length < 2) return [];
+
+    const command = this._applyReplacement([target], created, {
+      label: 'Explode geometry',
+      action: 'explode',
+    });
+    this.fire('explode', { layer: target, layers: created, command });
+    return created;
+  }
+
+  /**
+   * Можно ли добавить отверстие: нужен ровно один выбранный полигон.
+   * @param {any} [layer]
+   * @returns {boolean}
+   */
+  canAddHole(layer) {
+    const leaves = layer ? [layer] : this._operationLeaves(null);
+    return leaves.length === 1 && getLayerKind(leaves[0]) === 'polygon';
+  }
+
+  /**
+   * Добавляет отверстие в полигон.
+   * @param {any} layer полигон
+   * @param {import('sweety-map').LatLng[]} ring кольцо отверстия
+   * @returns {boolean}
+   */
+  addHole(layer, ring) {
+    const target = layer && getLayerKind(layer) === 'polygon' ? layer : this._singlePolygon();
+    if (!target) {
+      this.fire('hole:invalid', { layer: layer || null, reason: 'not-polygon' });
+      return false;
+    }
+    const hole = (Array.isArray(ring) ? ring : []).map(cloneLatLng);
+    const rings = getRings(target).map((item) => item.map(cloneLatLng));
+    const reason = validateHole(ringsToXY(this.map, rings), ringsToXY(this.map, [hole])[0]);
+    if (reason) {
+      this.fire('hole:invalid', { layer: target, reason });
+      return false;
+    }
+
+    const before = snapshotGeometry(target);
+    rings.push(hole);
+    target.setLatLngs(rings);
+    const after = snapshotGeometry(target);
+    const command = new GeometryCommand('Add hole', [{ layer: target, before, after }]);
+    if (this.options.undoRedo) this._stack.push(command, { apply: false });
+
+    this._emitUpdate([target], 'add-hole', { command });
+    this.fire('hole:added', { layer: target, holes: rings.length - 1 });
+    this._refreshAll();
+    return true;
+  }
+
+  /**
+   * Удаляет кольцо-отверстие по индексу (0 — внешнее кольцо).
+   * @param {any} layer полигон
+   * @param {number} index
+   * @returns {boolean}
+   */
+  removeHole(layer, index) {
+    const target = layer && getLayerKind(layer) === 'polygon' ? layer : this._singlePolygon();
+    if (!target) return false;
+    const position = Number(index);
+    const rings = getRings(target).map((item) => item.map(cloneLatLng));
+    if (!Number.isInteger(position) || position < 1 || position >= rings.length) return false;
+
+    const before = snapshotGeometry(target);
+    rings.splice(position, 1);
+    target.setLatLngs(rings);
+    const after = snapshotGeometry(target);
+    const command = new GeometryCommand('Remove hole', [{ layer: target, before, after }]);
+    if (this.options.undoRedo) this._stack.push(command, { apply: false });
+
+    this._emitUpdate([target], 'remove-hole', { command });
+    this.fire('hole:removed', { layer: target, index: position });
+    this._refreshAll();
+    return true;
+  }
+
+  /**
+   * Можно ли что-то разрезать: среди выбранных есть полигон или полилиния.
+   * @param {any[]} [layers]
+   * @returns {boolean}
+   */
+  canCut(layers) {
+    return this._operationLeaves(layers).some((layer) => {
+      const kind = getLayerKind(layer);
+      return kind === 'polygon' || kind === 'polyline' || kind === 'rectangle';
+    });
+  }
+
+  /**
+   * Разрезает объекты секущей линией. Каждый полигон делится на две части,
+   * каждая полилиния — на части по точкам пересечения. Непересечённые объекты
+   * остаются нетронутыми.
+   * @param {any[]} [layers]
+   * @param {import('sweety-map').LatLng[]} cutter
+   * @returns {any[]} созданные слои
+   */
+  cutLayers(layers, cutter) {
+    const leaves = this._operationLeaves(layers);
+    if (!leaves.length || !Array.isArray(cutter) || cutter.length < 2) {
+      this.fire('cut:invalid', { layers: leaves, reason: 'cutter' });
+      return [];
+    }
+    const cutterXY = ringsToXY(this.map, [cutter])[0];
+    const removed = [];
+    const created = [];
+
+    for (const layer of leaves) {
+      const kind = getLayerKind(layer);
+      if (kind !== 'polygon' && kind !== 'polyline' && kind !== 'rectangle') continue;
+      const rings = getRings(layer);
+      const style = this._inheritStyle(layer);
+
+      if (kind === 'polyline') {
+        const parts = splitPolylineByLine(ringsToXY(this.map, rings), cutterXY);
+        if (!parts) continue;
+        for (const part of parts) {
+          const polyline = new Polyline(xyToRings(this.map, [part]), style);
+          this._inheritFeature(polyline, layer);
+          created.push(polyline);
+        }
+        removed.push(layer);
+        continue;
+      }
+
+      const parts = splitPolygonByLine(ringsToXY(this.map, rings), cutterXY);
+      if (!parts) {
+        this.fire('cut:invalid', { layer, reason: 'crossings' });
+        continue;
+      }
+      for (const part of parts) {
+        const polygon = new Polygon(xyToRings(this.map, part), style);
+        this._inheritFeature(polygon, layer);
+        created.push(polygon);
+      }
+      removed.push(layer);
+    }
+
+    if (!created.length) return [];
+    const command = this._applyReplacement(removed, created, {
+      label: 'Cut geometry',
+      action: 'cut',
+    });
+    this.fire('cut', { layers: created, sources: removed, cutter, command });
+    return created;
+  }
+
+  /**
+   * Можно ли объединить объекты по общим границам: нужно минимум два полигона.
+   * @param {any[]} [layers]
+   * @returns {boolean}
+   */
+  canUnion(layers) {
+    const leaves = this._operationLeaves(layers);
+    return leaves.length >= 2 && leaves.every((layer) => this._isPolygonKind(layer));
+  }
+
+  /** @param {any[]} [layers] @returns {any|null} */
+  unionSelected(layers) {
+    return this.unionLayers(layers);
+  }
+
+  /**
+   * Объединяет полигоны по общим границам: общая граница исчезает, остаётся
+   * один объект с внешним контуром. Наложение объектов не поддерживается —
+   * для этого нужны логические операции над областями.
+   * @param {any[]} [layers]
+   * @returns {any|null}
+   */
+  unionLayers(layers) {
+    const leaves = this._operationLeaves(layers);
+    if (leaves.length < 2 || !leaves.every((layer) => this._isPolygonKind(layer))) {
+      this.fire('union:invalid', { layers: leaves, reason: 'selection' });
+      return null;
+    }
+    const xyRings = leaves.flatMap((layer) => ringsToXY(this.map, getRings(layer)));
+    const result = dissolveRings(xyRings);
+    if (result.error) {
+      this.fire('union:invalid', { layers: leaves, reason: result.error });
+      return null;
+    }
+
+    const rings = xyToRings(this.map, result.rings);
+    const merged = new Polygon(rings, this._inheritStyle(leaves[0]));
+    this._inheritFeature(merged, leaves[0]);
+    const command = this._applyReplacement(leaves, [merged], {
+      label: 'Union polygons',
+      action: 'union',
+    });
+    this.fire('union', { layer: merged, sources: leaves, rings: rings.length, command });
+    return merged;
   }
 
   /* ----------------------------------------------------------------------- *

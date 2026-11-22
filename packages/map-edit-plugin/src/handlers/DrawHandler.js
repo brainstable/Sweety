@@ -37,12 +37,18 @@ export class DrawHandler extends EditHandler {
   /**
    * @param {import('../EditPlugin.js').EditPlugin} plugin
    * @param {string} type
-   * @param {{target?: any|null}} [options]
+   * @param {{target?: any|null, intent?: 'create'|'hole'|'cut', holeTarget?: any, cutTargets?: any[]}} [options]
    */
   constructor(plugin, type, options = {}) {
     super(plugin);
     this.type = normalizeDrawType(type);
     this.target = options.target || plugin.options.target || null;
+    /** Назначение черновика: новый объект, отверстие или секущая линия. */
+    this.intent = options.intent || 'create';
+    /** @type {any|null} */
+    this.holeTarget = options.holeTarget || null;
+    /** @type {any[]|null} */
+    this.cutTargets = options.cutTargets || null;
     /** @type {import('sweety-map').LatLng[]} */
     this.vertices = [];
     /** @type {import('sweety-map').LatLng|null} */
@@ -78,7 +84,11 @@ export class DrawHandler extends EditHandler {
       this.map.doubleClickZoom.disable();
     }
 
-    this.plugin.fire('draw:started', { type: this.type, target: this.target });
+    this.plugin.fire('draw:started', {
+      type: this.type,
+      intent: this.intent,
+      target: this.target,
+    });
     this._updateGhost();
     this._updateToolbar();
     return this;
