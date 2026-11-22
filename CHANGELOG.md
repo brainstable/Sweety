@@ -8,6 +8,14 @@
 
 _Изменений пока нет._
 
+## [0.2.1] — 2026-11-22
+
+### Добавлено
+
+- `FeatureGroup.getBounds()` и, как следствие, `GeoJSONLayer.getBounds()`:
+  общие границы всех дочерних объектов, включая маркеры и вложенные группы.
+  Работает с `map.fitBounds(layer.getBounds())`.
+
 ## [0.2.0] — 2026-11-22
 
 ### Добавлено
@@ -168,5 +176,6 @@ runtime-зависимостей.
 - Для идеальной резкости при непрерывном `flyTo` требуются дробные тайлы,
   которые библиотека не загружает.
 
+[0.2.1]: https://github.com/brainstable/sweety/releases/tag/v0.2.1
 [0.2.0]: https://github.com/brainstable/sweety/releases/tag/v0.2.0
 [0.1.0]: https://github.com/brainstable/sweety/releases/tag/v0.1.0

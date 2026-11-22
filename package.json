@@ -1,6 +1,6 @@
 {
   "name": "sweety-map",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Модульная JavaScript-библиотека интерактивных карт без runtime-зависимостей.",
   "type": "module",
   "main": "./dist/sweety.umd.cjs",
