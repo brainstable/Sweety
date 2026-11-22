@@ -433,7 +433,7 @@ npm run size     # бюджет размера
 `http://localhost:<port>/demo/`. Если открыть `demo/index.html` с диска,
 страница покажет команду запуска — пустой карты без объяснения не будет.
 
-Пакет собирается с `peerDependencies: { "sweety-map": "^0.1.0" }`; ядро не
+Пакет собирается с `peerDependencies: { "sweety-map": "^0.2.0" }`; ядро не
 бандлится. UMD-глобалы: `SweetyBasemaps` и `SweetyBasemapsLight`. CSS —
 `map-basemaps.css`.
 

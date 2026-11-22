@@ -190,7 +190,7 @@ function isCoarsePointer() {
  */
 export class EditPlugin extends Evented {
   /** @type {string} */
-  static version = '0.1.0';
+  static version = '0.2.0';
 
   /**
    * Устанавливает плагин на карту и возвращает существующий экземпляр, если он

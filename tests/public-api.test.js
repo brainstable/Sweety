@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import Sweety, {
   AttributionControl,
@@ -31,9 +33,11 @@ import Sweety, {
   ZoomControl,
 } from '../src/index.js';
 
+const { version } = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'));
+
 describe('public API', () => {
   it('exposes the complete namespace and named exports', () => {
-    expect(Sweety.version).toBe('0.1.0');
+    expect(Sweety.version).toBe(version);
     expect(Sweety.Map).toBe(Map);
     expect(Sweety.LatLng).toBe(LatLng);
     expect(Sweety.Point).toBe(Point);

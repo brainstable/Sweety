@@ -1,6 +1,6 @@
 {
   "name": "sweety-map-basemaps",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Каталог подложек и менеджер базовых слоёв для Sweety: OSM, Carto, Esri, Mapbox и другие.",
   "type": "module",
   "main": "./dist/map-basemaps.umd.cjs",
@@ -54,7 +54,7 @@
     "node": ">=20.19.0"
   },
   "peerDependencies": {
-    "sweety-map": "^0.1.0"
+    "sweety-map": "^0.2.0"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",

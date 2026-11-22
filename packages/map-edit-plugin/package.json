@@ -1,6 +1,6 @@
 {
   "name": "sweety-map-edit-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Плагин редактирования и рисования геометрии для Sweety: режимы, вершины, undo/redo, GeoJSON.",
   "type": "module",
   "main": "./dist/map-edit-plugin.umd.cjs",
@@ -48,7 +48,7 @@
     "node": ">=20.19.0"
   },
   "peerDependencies": {
-    "sweety-map": "^0.1.0"
+    "sweety-map": "^0.2.0"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",
