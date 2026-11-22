@@ -49,6 +49,8 @@ export class DrawHandler extends EditHandler {
     this.holeTarget = options.holeTarget || null;
     /** @type {any[]|null} */
     this.cutTargets = options.cutTargets || null;
+    /** Слои, к вершинам которых не привязываемся при рисовании. */
+    this.snapExclude = options.snapExclude || null;
     /** @type {import('sweety-map').LatLng[]} */
     this.vertices = [];
     /** @type {import('sweety-map').LatLng|null} */
@@ -110,7 +112,7 @@ export class DrawHandler extends EditHandler {
     if (event.latlng) latlng = toLatLng(event.latlng);
     else if (event.containerPoint) latlng = this.map.containerPointToLatLng(event.containerPoint);
     else return;
-    latlng = this.plugin._snapLatLng(latlng);
+    latlng = this.plugin._snapLatLng(latlng, this.snapExclude);
     this.cursor = latlng;
 
     if (this.type === 'marker') {
@@ -156,7 +158,7 @@ export class DrawHandler extends EditHandler {
   _handlePointerMove(event) {
     if (!this.active) return;
     const point = DomUtil.getMousePosition(event, this.map.getContainer());
-    this.cursor = this.plugin._snapLatLng(this.map.containerPointToLatLng(point));
+    this.cursor = this.plugin._snapLatLng(this.map.containerPointToLatLng(point), this.snapExclude);
     this._updateGhost();
   }
 

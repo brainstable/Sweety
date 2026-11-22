@@ -68,7 +68,7 @@ export class EditSession {
     if (!this.active || !this.map) return [];
     const options = this.plugin.options;
     const maxHandles = Math.max(20, Number(options.maxHandles) || 400);
-    const midpointsEnabled = options.midpoints !== false;
+    const midpointsEnabled = options.midpoints !== false && options.hideMiddleMarkers !== true;
 
     if (this.kind === 'marker') {
       return [this._handle('p', 'vertex', this.layer.getLatLng(), { index: 0 })];
@@ -209,20 +209,34 @@ export class EditSession {
   }
 
   /**
-   * Удаляет вершину с проверкой минимума.
+   * Удаляет вершину. Отверстие можно удалить целиком, а внешнее кольцо, у
+   * которого осталось меньше минимума вершин, убирается вместе с объектом или
+   * без него — в зависимости от `removeLayerBelowMinVertexCount`.
    * @param {object} handle
-   * @returns {boolean} удалось ли удалить
+   * @returns {'vertex'|'ring'|'layer'|false} что именно удалено
    */
   deleteVertex(handle) {
     if (this.kind !== 'polyline' && this.kind !== 'polygon') return false;
     const rings = cloneLatLngs(getRings(this.layer));
     const ring = rings[handle.part];
-    if (!ring) return false;
+    if (!ring || !ring[handle.index]) return false;
     const min = this.plugin.getMinVertices(this.kind);
-    if (ring.length <= min) return false;
+    const isHole = this.kind === 'polygon' && handle.part > 0;
+    const allowRemove = this.plugin.options.removeLayerBelowMinVertexCount !== false;
+    if (!isHole && !allowRemove && ring.length <= min) return false;
+
     ring.splice(handle.index, 1);
+    if (ring.length < min && (isHole || allowRemove)) {
+      // Отверстие исчезает целиком, а вырожденное внешнее кольцо убирается,
+      // если разрешено удалять объект при нехватке вершин.
+      rings.splice(handle.part, 1);
+    }
+    if (!rings.length) {
+      this.layer.setLatLngs([]);
+      return 'layer';
+    }
     this.layer.setLatLngs(rings);
-    return true;
+    return ring.length < min ? 'ring' : 'vertex';
   }
 
   /** @returns {object|null} */

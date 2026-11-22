@@ -22,6 +22,7 @@ src/
 ├── geo/
 │   ├── Projection.js       интерфейс Projection, EPSG:3857, EPSG:4326
 │   ├── CRS.js              Transformation, CRS и пиксельная привязка
+│   ├── rings.js            вложенность колец: контуры, отверстия, MultiPolygon
 │   └── destination.js      точка назначения по азимуту и расстоянию
 ├── handlers/
 │   ├── DragHandler.js      pan + инерция

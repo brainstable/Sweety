@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { Map, Polygon, Polyline } from 'sweety-map';
+import { LatLng, Map, Polygon, Polyline } from 'sweety-map';
 import { EditPlugin } from '../src/EditPlugin.js';
 
 /** @type {Array<{plugin: EditPlugin, map: Map, container: HTMLElement}>} */
@@ -398,5 +398,82 @@ describe('EditPlugin: кнопки операций', () => {
 
     button('merge').click();
     expect(plugin.getSelected()).toHaveLength(1);
+  });
+});
+
+describe('EditPlugin: подсказки и совместимость', () => {
+  it('объединение вложенного полигона не делает дырку', () => {
+    const { plugin, map } = createHarness();
+    const outer = box(0, 0, 20, 20).addTo(map);
+    const inner = box(5, 5, 7, 7).addTo(map);
+    plugin.selectLayer(outer);
+    plugin.selectLayer(inner, true);
+
+    const union = plugin.unionSelected();
+    expect(union).toBeTruthy();
+    expect(union.getLatLngs()).toHaveLength(1);
+    const ring = union.getLatLngs()[0];
+    const lats = ring.map((latlng) => Math.round(latlng.lat));
+    expect(Math.min(...lats)).toBe(0);
+    expect(Math.max(...lats)).toBe(20);
+  });
+
+  it('показывает сообщение, когда разрез не удался', () => {
+    const { plugin, map, container } = createHarness();
+    const polygon = box(0, 0, 10, 10).addTo(map);
+    plugin.selectLayer(polygon);
+
+    expect(
+      plugin.cutLayers(
+        [polygon],
+        [
+          [30, 30],
+          [31, 31],
+        ],
+      ),
+    ).toEqual([]);
+
+    const toast = container.querySelector('.map-edit-toast');
+    expect(toast).toBeTruthy();
+    expect(toast.textContent).toBe(plugin.t('cutFailed'));
+    expect(toast.classList.contains('is-visible')).toBe(true);
+  });
+
+  it('не копирует feature.id в части разреза', () => {
+    const { plugin, map } = createHarness();
+    const polygon = box(0, 0, 10, 10).addTo(map);
+    polygon.feature = {
+      type: 'Feature',
+      id: 'parcel-1',
+      properties: { name: 'Участок' },
+      geometry: polygon.toGeoJSON().geometry,
+    };
+
+    const parts = plugin.cutLayers(
+      [polygon],
+      [
+        [0, 5],
+        [10, 5],
+      ],
+    );
+    expect(parts).toHaveLength(2);
+    for (const part of parts) {
+      expect(part.feature.id).toBeUndefined();
+      expect(part.feature.properties.name).toBe('Участок');
+    }
+  });
+
+  it('при рисовании отверстия не привязывается к вершинам самого полигона', () => {
+    const { plugin, map } = createHarness({
+      snap: { enabled: true, gridSize: 0, toVertices: true, tolerance: 12 },
+    });
+    const polygon = box(0, 0, 10, 10).addTo(map);
+    const near = new LatLng(0.2, 0.2);
+    const snapped = plugin._snapLatLng(near);
+    expect(snapped.lat).not.toBeCloseTo(0.2, 3);
+
+    const excluded = plugin._snapLatLng(near, [polygon]);
+    expect(excluded.lat).toBeCloseTo(0.2, 6);
+    expect(excluded.lng).toBeCloseTo(0.2, 6);
   });
 });

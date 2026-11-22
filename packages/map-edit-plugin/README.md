@@ -166,6 +166,7 @@ editor.clearSelection();
 | `EditPlugin.install(map, options)`              | установить/получить экземпляр                          |
 | `enableEdit(layer) → session`                   | включить редактирование слоя или группы                |
 | `disableEdit(layer)`                            | выключить и убрать handles                             |
+| `toggleEdit(layer)`                             | переключить редактирование, вернуть новое состояние    |
 | `isEditable(layer)`                             | включено ли редактирование                             |
 | `getSession(layer)`                             | сессия слоя                                            |
 | `setMode(mode)` / `getMode()`                   | режим                                                  |
@@ -222,8 +223,9 @@ editor.clearSelection();
 
 `update` отправляется один раз после завершения жеста (на `pointerup`), а не на
 каждый `pointermove`. `action` — `move-vertex`, `insert-vertex`,
-`delete-vertex:*`, `move-layer`, `add-hole`, `remove-hole`, `merge`, `union`,
-`cut`, `explode`, `undo`, `redo`.
+`delete-vertex:*`, `delete-ring:*`, `delete-layer:*`, `move-layer`,
+`add-hole`, `remove-hole`, `merge`, `union`, `cut`, `explode`,
+`undo`, `redo`.
 
 События `draw:*` дополняют историю: `create` приходит после `draw:completed`.
 
@@ -248,6 +250,9 @@ const editor = new EditPlugin(map, {
   warnSelfIntersection: true,
   maxHandles: 400, // прореживание вершин для больших полигонов
   midpoints: true,
+  hideMiddleMarkers: false, // синоним midpoints: false
+  removeVertexOn: 'contextmenu', // 'contextmenu' | 'click' | 'dblclick' | 'none'
+  removeLayerBelowMinVertexCount: true,
   edgePan: { enabled: true, margin: 24, speed: 16 },
   style: {
     handleSize: 8,
@@ -279,7 +284,14 @@ const editor = new EditPlugin(map, {
 
 - Кружки — вершины, маленькие кружки — середины сегментов.
 - Клик по середине вставляет вершину и сразу позволяет её перетащить.
-- Правый клик, Ctrl/Cmd+клик или долгий тап (touch) удаляют вершину.
+- Вершина удаляется правым кликом (по умолчанию); Ctrl/Cmd+клик и долгий тап
+  (touch) работают всегда, как запасные способы.
+- `removeVertexOn` переключает способ удаления: `'contextmenu'`, `'click'`,
+  `'dblclick'` или `'none'`. Клик после перетаскивания вершину не удаляет.
+- Отверстие удаляется по вершинам целиком и не трогает сам полигон.
+- Если у внешнего кольца остаётся меньше минимума вершин, кольцо убирается;
+  `removeLayerBelowMinVertexCount: false` запрещает такое удаление, и редактор
+  отправляет `vertexlimit`.
 - `Delete`/`Backspace` удаляет выбранные объекты.
 - Маркер: одна вершина или перетаскивание иконки.
 - Круг: центр + отдельная ручка радиуса.
@@ -371,6 +383,12 @@ const parts = editor.cutLayers(
 );
 ```
 
+Если линия проходит ровно через вершину или не пересекает границу дважды, разрез
+не выполняется: приходит `cut:invalid` с причиной `crossings`, а в углу карты
+появляется короткое сообщение. При рисовании секущей привязка к вершинам
+разрезаемых объектов отключена, иначе линия прилипала бы к углам и разрез
+отменялся.
+
 ### Объединение по общим границам
 
 ```js
@@ -383,6 +401,10 @@ editor.unionSelected();
 рассчитана на примыкающие объекты: если полигоны накладываются друг на друга,
 приходит `union:invalid` с причиной `overlap` — для наложения нужны логические
 операции над областями, а не растворение границ.
+
+Объект, целиком лежащий внутри другого, объединению не мешает: его контур
+отбрасывается, потому что заливка есть с обеих сторон от него. Остров внутри
+отверстия остаётся отдельным контуром результата.
 
 ### Какие операции доступны
 
@@ -494,7 +516,9 @@ new EditPlugin(map, {
 Ключи: `toolbar`, `select`, `edit`, `delete`, `undo`, `redo`, `drawMarker`,
 `drawPolyline`, `drawPolygon`, `drawCircle`, `drawRectangle`, `finish`,
 `cancel`, `merge`, `union`, `explode`, `addHole`, `cut`, `hint*`, `vertices`,
-`selected`, `confirmDelete`, `vertexLimit`.
+`selected`, `confirmDelete`, `vertexLimit`, `mergeFailed`, `unionFailed`,
+`unionOverlap`, `unionOpen`, `cutSelect`, `cutFailed`, `holeSelect`,
+`holeFailed`, `holeCrosses`, `holeEmpty`.
 
 ## Крайние случаи и производительность
 
@@ -533,9 +557,10 @@ ES-модули по `file://`. Вместо пустой страницы де�
 на консоль браузера и терминал Vite.
 
 Тесты покрывают `GeometryUtils`, `Operations`, `CommandStack`, создание и
-редактирование полигонов, drag вершин и тела, midpoint, круг, прямоугольник,
-GeoJSON-группы, удаление, undo/redo, клавиатуру, snap, самопересечения, операции
-над готовой геометрией и очистку при `destroy()`.
+редактирование полигонов, drag вершин и тела, midpoint, способы удаления вершин и
+колец, круг, прямоугольник, GeoJSON-группы, удаление, undo/redo, клавиатуру,
+snap, самопересечения, операции над готовой геометрией и очистку при
+`destroy()`.
 
 Пакет собирается с `peerDependencies: { "sweety-map": "^0.1.0" }`: ядро не
 бандлится. Внешний вид подключается отдельным файлом `map-edit-plugin.css`.

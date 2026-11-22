@@ -463,17 +463,25 @@ export function splitPolylineByLine(parts, cutter) {
  * Объединяет полигоны по общим границам (операция dissolve): общие участки
  * границ взаимно уничтожаются, из оставшихся рёбер собираются новые кольца.
  *
+ * Полигоны передаются группами колец, первое кольцо — внешнее. Это важно:
+ * объект, целиком лежащий внутри другого, не должен превращаться в отверстие —
+ * его контур отбрасывается, потому что заливка есть с обеих сторон. Плоский
+ * список колец тоже принимается: каждое кольцо считается отдельным полигоном.
+ *
  * Подходит именно для примыкающих объектов. Если полигоны накладываются друг
  * на друга (их границы пересекаются), вернётся `{ error: 'overlap' }`: такой
  * случай требует логических операций над областями, а не растворения границ.
  *
- * @param {XYRing[]} rings все кольца объединяемых полигонов
+ * @param {XYRing[]|XYRing[][]} polygons кольца объединяемых полигонов
  * @param {{tolerance?: number}} [options]
  * @returns {{rings: XYRing[], error?: undefined}|{error: 'overlap'|'open-boundary'|'empty'}}
  */
-export function dissolveRings(rings, options = {}) {
+export function dissolveRings(polygons, options = {}) {
   const tolerance = Number(options.tolerance) > 0 ? Number(options.tolerance) : 1e-6;
   const cellSize = Math.max(tolerance, 1e-9);
+  const groups = normalizePolygons(polygons);
+  const rings = groups.flat();
+  if (!rings.length) return { error: 'empty' };
   /** @type {XY[]} */
   const vertices = [];
   /** @type {Map<string, number[]>} */
@@ -654,13 +662,153 @@ export function dissolveRings(rings, options = {}) {
   }
   if (!loops.length) return { error: 'open-boundary' };
 
-  const loopsXY = loops.map((loop) => loop.map((id) => ({ x: vertices[id].x, y: vertices[id].y })));
-  const groups = classifyRings(loopsXY);
+  // Петля, проходящая через одну вершину дважды, — это два объекта, касающихся
+  // углом: разводим их, чтобы кольца не оказались самокасающимися.
+  const simpleLoops = loops.flatMap((loop) => splitLoopAtRepeatedVertices(loop));
+  const loopsXY = simpleLoops.map((loop) =>
+    loop.map((id) => ({ x: vertices[id].x, y: vertices[id].y })),
+  );
+  const boundaryLoops = loopsXY.filter((loop) => isBoundaryLoop(loop, groups));
+  if (!boundaryLoops.length) return { error: 'empty' };
+
+  const classified = classifyRings(boundaryLoops);
   /** @type {XYRing[]} */
   const ordered = [];
-  for (const group of groups) {
+  for (const group of classified) {
     ordered.push(group.outer);
     for (const hole of group.holes) ordered.push(hole);
   }
   return { rings: ordered };
+}
+
+/**
+ * Приводит вход к списку полигонов. Каждый полигон — массив колец, где первое
+ * кольцо внешнее. Плоский список колец трактуется как набор односвязных
+ * полигонов, поэтому обе формы записи допустимы.
+ * @param {XYRing[]|XYRing[][]} input
+ * @returns {XYRing[][]}
+ */
+function normalizePolygons(input) {
+  if (!Array.isArray(input)) return [];
+  /** @type {XYRing[][]} */
+  const polygons = [];
+  for (const item of input) {
+    if (!Array.isArray(item) || !item.length) continue;
+    if (Array.isArray(item[0])) {
+      const rings = item.filter((ring) => Array.isArray(ring) && ring.length >= 3);
+      if (rings.length) polygons.push(rings);
+      continue;
+    }
+    const point = item[0];
+    if (point && typeof point.x === 'number' && typeof point.y === 'number' && item.length >= 3) {
+      polygons.push([item]);
+    }
+  }
+  return polygons;
+}
+
+/**
+ * Лежит ли точка внутри объединения исходных полигонов.
+ * @param {XYRing[][]} groups
+ * @param {XY} point
+ * @returns {boolean}
+ */
+function pointInPolygons(groups, point) {
+  for (const rings of groups) {
+    if (pointInPolygonRings(point, rings)) return true;
+  }
+  return false;
+}
+
+/**
+ * Настоящая ли граница у петли. Петля, целиком лежащая внутри заливки, границей
+ * не является: у неё заливка с обеих сторон, и её нужно отбросить (например,
+ * контур объекта, который целиком находится внутри другого объединённого).
+ * @param {XYRing} loop
+ * @param {XYRing[][]} groups исходные полигоны
+ * @returns {boolean}
+ */
+function isBoundaryLoop(loop, groups) {
+  if (!Array.isArray(loop) || loop.length < 3) return false;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const point of loop) {
+    minX = Math.min(minX, point.x);
+    minY = Math.min(minY, point.y);
+    maxX = Math.max(maxX, point.x);
+    maxY = Math.max(maxY, point.y);
+  }
+  const diagonal = Math.hypot(maxX - minX, maxY - minY) || 1;
+
+  let tested = 0;
+  let boundaries = 0;
+  const limit = Math.min(loop.length, 64);
+  for (let index = 0; index < limit; index += 1) {
+    const start = loop[index];
+    const end = loop[(index + 1) % loop.length];
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const length = Math.hypot(dx, dy);
+    if (length <= EPSILON) continue;
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    const normalX = -dy / length;
+    const normalY = dx / length;
+    const distance = Math.max(1e-9, Math.min(length, diagonal) * 1e-4);
+    const left = { x: midX + normalX * distance, y: midY + normalY * distance };
+    const right = { x: midX - normalX * distance, y: midY - normalY * distance };
+    tested += 1;
+    if (pointInPolygons(groups, left) !== pointInPolygons(groups, right)) boundaries += 1;
+  }
+  if (!tested) return false;
+  // У настоящей границы почти все рёбра разделяют заливку; у внутренней петли
+  // не разделяет ни одно. Порог в половину рёбер устойчив к численному шуму.
+  return boundaries * 2 >= tested;
+}
+
+/**
+ * Разводит петлю, проходящую через вершину дважды, на простые петли. Так
+ * полигоны, касающиеся углом, остаются двумя кольцами, а не одним
+ * самокасающимся контуром.
+ * @param {number[]} loop индексы вершин
+ * @returns {number[][]}
+ */
+function splitLoopAtRepeatedVertices(loop) {
+  /** @type {number[][]} */
+  const result = [];
+  /** @type {number[][]} */
+  const queue = [loop];
+  let guard = 0;
+  while (queue.length) {
+    guard += 1;
+    const current = queue.pop();
+    if (guard > 64 || !current || current.length < 3) continue;
+    /** @type {Map<number, number>} */
+    const seen = new Map();
+    let start = -1;
+    let end = -1;
+    for (let index = 0; index < current.length; index += 1) {
+      const id = current[index];
+      const previous = seen.get(id);
+      if (previous === undefined) {
+        seen.set(id, index);
+        continue;
+      }
+      start = previous;
+      end = index;
+      break;
+    }
+    if (start === -1) {
+      result.push(current);
+      continue;
+    }
+    const firstPart = current.slice(start, end);
+    const secondPart = [...current.slice(end), ...current.slice(0, start)];
+    if (firstPart.length >= 3) queue.push(firstPart);
+    if (secondPart.length >= 3) queue.push(secondPart);
+    if (firstPart.length < 3 && secondPart.length < 3) result.push(current);
+  }
+  return result;
 }

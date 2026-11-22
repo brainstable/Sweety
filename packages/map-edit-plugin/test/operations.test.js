@@ -183,12 +183,36 @@ describe('Operations: объединение по общим границам', 
   });
 
   it('сохраняет отверстие при растворении границ', () => {
-    const result = dissolveRings([box(0, 0), box(1, 1, 1)]);
+    const result = dissolveRings([[box(0, 0), box(1, 1, 1)]]);
     expect(result.error).toBeUndefined();
     expect(result.rings).toHaveLength(2);
     const areas = result.rings.map(area).sort((a, b) => a - b);
     expect(areas[0]).toBeCloseTo(1, 6);
     expect(areas[1]).toBeCloseTo(16, 6);
+  });
+
+  it('не превращает вложенный объект в отверстие', () => {
+    // Объект целиком внутри другого при объединении ничего не добавляет.
+    const nested = dissolveRings([box(0, 0, 10), box(2, 2, 2)]);
+    expect(nested.error).toBeUndefined();
+    expect(nested.rings).toHaveLength(1);
+    expect(area(nested.rings[0])).toBeCloseTo(100, 6);
+
+    // Остров внутри отверстия остаётся отдельным контуром.
+    const island = dissolveRings([[box(0, 0, 10), box(2, 2, 6)], box(4, 4, 2)]);
+    expect(island.error).toBeUndefined();
+    expect(island.rings).toHaveLength(3);
+    const areas = island.rings.map(area).sort((a, b) => a - b);
+    expect(areas[0]).toBeCloseTo(4, 6);
+    expect(areas[1]).toBeCloseTo(36, 6);
+    expect(areas[2]).toBeCloseTo(100, 6);
+  });
+
+  it('разводит касание углом на два кольца', () => {
+    const touch = dissolveRings([box(0, 0), box(4, 4)]);
+    expect(touch.error).toBeUndefined();
+    expect(touch.rings).toHaveLength(2);
+    expect(touch.rings.every((ring) => ring.length === 4)).toBe(true);
   });
 
   it('сообщает о наложении и схлопывает совпадающие объекты', () => {

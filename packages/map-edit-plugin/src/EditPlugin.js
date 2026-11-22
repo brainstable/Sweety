@@ -85,6 +85,12 @@ export const DEFAULT_OPTIONS = {
   warnSelfIntersection: true,
   maxHandles: 400,
   midpoints: true,
+  /** Синоним `midpoints: false` из привычных редакторов геометрии. */
+  hideMiddleMarkers: false,
+  /** Чем удалять вершину: `contextmenu` (по умолчанию), `click`, `dblclick` или `none`. */
+  removeVertexOn: 'contextmenu',
+  /** Убирать кольцо или объект, когда вершин становится меньше минимума. */
+  removeLayerBelowMinVertexCount: true,
   edgePan: {
     enabled: true,
     margin: 24,
@@ -231,6 +237,10 @@ export class EditPlugin extends Evented {
     this._cssVars = [];
     this._intersectionState = new WeakMap();
     this._selectionDuringDraw = null;
+    /** @type {HTMLElement|null} */
+    this._toast = null;
+    /** @type {number|ReturnType<typeof setTimeout>|null} */
+    this._toastTimer = null;
 
     this._onMapClick = (event) => this._handleMapClick(event);
     this._onLayerRemove = (event) => this._handleLayerRemove(event);
@@ -609,9 +619,16 @@ export class EditPlugin extends Evented {
     const target = layer || this._singlePolygon();
     if (!target || getLayerKind(target) !== 'polygon') {
       this.fire('hole:invalid', { layer: target || null, reason: 'selection' });
+      this._notify(this.t('holeSelect'));
       return null;
     }
-    return this._startDrawSession('polygon', { intent: 'hole', holeTarget: target });
+    // К вершинам самого полигона не привязываемся: иначе контур отверстия
+    // прилипнет к границе и проверка вложенности его отклонит.
+    return this._startDrawSession('polygon', {
+      intent: 'hole',
+      holeTarget: target,
+      snapExclude: target,
+    });
   }
 
   /**
@@ -627,9 +644,16 @@ export class EditPlugin extends Evented {
     });
     if (!targets.length) {
       this.fire('cut:invalid', { layers: [], reason: 'selection' });
+      this._notify(this.t('cutSelect'));
       return null;
     }
-    return this._startDrawSession('polyline', { intent: 'cut', cutTargets: targets });
+    // Секущая не должна прилипать к вершинам разрезаемых объектов: попадание
+    // ровно в вершину не считается пересечением границы.
+    return this._startDrawSession('polyline', {
+      intent: 'cut',
+      cutTargets: targets,
+      snapExclude: targets,
+    });
   }
 
   /** @private */
@@ -868,13 +892,22 @@ export class EditPlugin extends Evented {
     return layer && layer.options ? { ...layer.options } : {};
   }
 
-  /** @private */
-  _inheritFeature(target, source) {
+  /**
+   * Переносит свойства исходного объекта в результат операции.
+   * @private
+   * @param {any} target
+   * @param {any} source
+   * @param {{copyId?: boolean}} [options] `id` не копируется, когда из одного
+   *   объекта получается несколько: совпадающие идентификаторы ломают стили и
+   *   повторный импорт у потребителей GeoJSON.
+   */
+  _inheritFeature(target, source, { copyId = true } = {}) {
     if (!target || !source || !source.feature) return;
     target.feature = {
       ...source.feature,
       properties: { ...(source.feature.properties || {}) },
     };
+    if (!copyId && 'id' in target.feature) delete target.feature.id;
   }
 
   /** @private */
@@ -965,6 +998,7 @@ export class EditPlugin extends Evented {
     const family = this._familyOf(leaves);
     if (leaves.length < 2 || !family) {
       this.fire('merge:invalid', { layers: leaves, reason: 'selection' });
+      this._notify(this.t('mergeFailed'));
       return null;
     }
     const rings = leaves.flatMap((layer) => getRings(layer).map((ring) => ring.map(cloneLatLng)));
@@ -1019,12 +1053,12 @@ export class EditPlugin extends Evented {
       kind === 'polygon'
         ? classifyRings(ringsToXY(this.map, rings)).map((group) => {
             const polygon = new Polygon(xyToRings(this.map, [group.outer, ...group.holes]), style);
-            this._inheritFeature(polygon, target);
+            this._inheritFeature(polygon, target, { copyId: false });
             return polygon;
           })
         : rings.map((ring) => {
             const polyline = new Polyline([ring.map(cloneLatLng)], style);
-            this._inheritFeature(polyline, target);
+            this._inheritFeature(polyline, target, { copyId: false });
             return polyline;
           });
     if (created.length < 2) return [];
@@ -1057,6 +1091,7 @@ export class EditPlugin extends Evented {
     const target = layer && getLayerKind(layer) === 'polygon' ? layer : this._singlePolygon();
     if (!target) {
       this.fire('hole:invalid', { layer: layer || null, reason: 'not-polygon' });
+      this._notify(this.t('holeSelect'));
       return false;
     }
     const hole = (Array.isArray(ring) ? ring : []).map(cloneLatLng);
@@ -1064,6 +1099,11 @@ export class EditPlugin extends Evented {
     const reason = validateHole(ringsToXY(this.map, rings), ringsToXY(this.map, [hole])[0]);
     if (reason) {
       this.fire('hole:invalid', { layer: target, reason });
+      this._notify(
+        this.t(
+          reason === 'crosses' ? 'holeCrosses' : reason === 'empty' ? 'holeEmpty' : 'holeFailed',
+        ),
+      );
       return false;
     }
 
@@ -1130,11 +1170,13 @@ export class EditPlugin extends Evented {
     const leaves = this._operationLeaves(layers);
     if (!leaves.length || !Array.isArray(cutter) || cutter.length < 2) {
       this.fire('cut:invalid', { layers: leaves, reason: 'cutter' });
+      this._notify(this.t('cutFailed'));
       return [];
     }
     const cutterXY = ringsToXY(this.map, [cutter])[0];
     const removed = [];
     const created = [];
+    let crossings = 0;
 
     for (const layer of leaves) {
       const kind = getLayerKind(layer);
@@ -1147,7 +1189,7 @@ export class EditPlugin extends Evented {
         if (!parts) continue;
         for (const part of parts) {
           const polyline = new Polyline(xyToRings(this.map, [part]), style);
-          this._inheritFeature(polyline, layer);
+          this._inheritFeature(polyline, layer, { copyId: false });
           created.push(polyline);
         }
         removed.push(layer);
@@ -1156,18 +1198,22 @@ export class EditPlugin extends Evented {
 
       const parts = splitPolygonByLine(ringsToXY(this.map, rings), cutterXY);
       if (!parts) {
+        crossings += 1;
         this.fire('cut:invalid', { layer, reason: 'crossings' });
         continue;
       }
       for (const part of parts) {
         const polygon = new Polygon(xyToRings(this.map, part), style);
-        this._inheritFeature(polygon, layer);
+        this._inheritFeature(polygon, layer, { copyId: false });
         created.push(polygon);
       }
       removed.push(layer);
     }
 
-    if (!created.length) return [];
+    if (!created.length) {
+      if (crossings) this._notify(this.t('cutFailed'));
+      return [];
+    }
     const command = this._applyReplacement(removed, created, {
       label: 'Cut geometry',
       action: 'cut',
@@ -1202,12 +1248,14 @@ export class EditPlugin extends Evented {
     const leaves = this._operationLeaves(layers);
     if (leaves.length < 2 || !leaves.every((layer) => this._isPolygonKind(layer))) {
       this.fire('union:invalid', { layers: leaves, reason: 'selection' });
+      this._notify(this.t('unionFailed'));
       return null;
     }
-    const xyRings = leaves.flatMap((layer) => ringsToXY(this.map, getRings(layer)));
-    const result = dissolveRings(xyRings);
+    const polygons = leaves.map((layer) => ringsToXY(this.map, getRings(layer)));
+    const result = dissolveRings(polygons);
     if (result.error) {
       this.fire('union:invalid', { layers: leaves, reason: result.error });
+      this._notify(this.t(result.error === 'overlap' ? 'unionOverlap' : 'unionOpen'));
       return null;
     }
 
@@ -1518,6 +1566,14 @@ export class EditPlugin extends Evented {
       this._emitUpdate([layer], drag.inserted ? 'insert-vertex' : 'move-vertex', { command });
     }
     this._suppressNextClick();
+    if (drag.moved || drag.inserted) {
+      // За перетаскиванием браузер присылает click — он не должен удалять
+      // только что сдвинутую вершину при `removeVertexOn: 'click'`.
+      this._suppressHandleClick = true;
+      setTimeout(() => {
+        this._suppressHandleClick = false;
+      }, 0);
+    }
     this._refreshAll();
   }
 
@@ -1609,7 +1665,22 @@ export class EditPlugin extends Evented {
   /** @private */
   _onHandleContextMenu(handle) {
     if (this._destroyed) return;
+    if (this.options.removeVertexOn !== 'contextmenu') return;
     this._deleteHandleVertex(handle, 'contextmenu');
+  }
+
+  /** @private */
+  _onHandleClick(handle) {
+    if (this._destroyed || this._suppressHandleClick) return;
+    if (this.options.removeVertexOn !== 'click') return;
+    this._deleteHandleVertex(handle, 'click');
+  }
+
+  /** @private */
+  _onHandleDblClick(handle) {
+    if (this._destroyed || this._suppressHandleClick) return;
+    if (this.options.removeVertexOn !== 'dblclick') return;
+    this._deleteHandleVertex(handle, 'dblclick');
   }
 
   /** @private */
@@ -1618,19 +1689,54 @@ export class EditPlugin extends Evented {
     this._deleteHandleVertex(handle, 'ctrl');
   }
 
+  /**
+   * Переключает редактирование слоя и возвращает новое состояние.
+   * @param {any} layer
+   * @returns {boolean}
+   */
+  toggleEdit(layer) {
+    if (this.isEditable(layer)) {
+      this.disableEdit(layer);
+      return false;
+    }
+    return Boolean(this.enableEdit(layer));
+  }
+
   /** @private */
   _deleteHandleVertex(handle, action) {
     if (!handle || handle.kind === 'midpoint') return false;
     const session = handle.session;
     const before = session.getSnapshot();
-    if (!session.deleteVertex(handle)) {
+    const result = session.deleteVertex(handle);
+    if (!result) {
       this.fire('vertexlimit', { layer: session.layer, handle });
       return false;
     }
     const after = session.getSnapshot();
-    const command = new DeleteVertexCommand(session.layer, before, after);
-    if (this.options.undoRedo) this._stack.push(command, { apply: false });
-    this._emitUpdate([session.layer], `delete-vertex:${action}`, { command });
+    const command =
+      result === 'layer'
+        ? new CompositeCommand(
+            [
+              new DeleteVertexCommand(session.layer, before, after),
+              new DeleteLayerCommand(session.layer, {
+                map: this.map,
+                parent: this._parentGroup(session.layer),
+                label: 'Delete layer',
+              }),
+            ],
+            'Delete layer',
+          )
+        : new DeleteVertexCommand(session.layer, before, after);
+    if (this.options.undoRedo) {
+      // Объект, у которого не осталось вершин, убирается сразу: команда
+      // применяется сама, иначе слой остался бы на карте с пустой геометрией.
+      this._stack.push(command, { apply: result === 'layer' });
+    } else {
+      command.execute();
+    }
+    const name =
+      result === 'vertex' ? 'delete-vertex' : result === 'ring' ? 'delete-ring' : 'delete-layer';
+    this._emitUpdate([session.layer], `${name}:${action}`, { command });
     this._suppressNextClick();
     this._refreshAll();
     return true;
@@ -1828,6 +1934,37 @@ export class EditPlugin extends Evented {
    * Снимки/события/утилиты
    * ----------------------------------------------------------------------- */
 
+  /**
+   * Короткое сообщение об отказе операции. Показывается в контейнере карты и
+   * исчезает само, поэтому не требует отдельной панели и не мешает работе.
+   * @param {string} message
+   * @param {{tone?: 'error'|'info', timeout?: number}} [options]
+   * @returns {HTMLElement|null}
+   */
+  _notify(message, { tone = 'error', timeout = 2600 } = {}) {
+    if (!message || this._destroyed || !this.map) return null;
+    const container = typeof this.map.getContainer === 'function' ? this.map.getContainer() : null;
+    if (!container) return null;
+    let node = this._toast;
+    if (!node) {
+      node = document.createElement('div');
+      node.className = 'map-edit-toast';
+      node.setAttribute('role', 'status');
+      node.setAttribute('aria-live', 'polite');
+      container.appendChild(node);
+      this._toast = node;
+    }
+    node.textContent = message;
+    node.dataset.tone = tone;
+    node.classList.add('is-visible');
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      this._toastTimer = null;
+      node.classList.remove('is-visible');
+    }, timeout);
+    return node;
+  }
+
   /** @private */
   _emitUpdate(layers, action, extra = {}) {
     const list = [...new Set(layers.filter(Boolean))];
@@ -1868,21 +2005,27 @@ export class EditPlugin extends Evented {
   /**
    * Привязка к сетке и к вершинам других объектов.
    * @param {any} latlng
-   * @param {any} [exclude]
+   * @param {any|any[]} [exclude] слой или слои, от вершин которых не привязываемся
    * @returns {any}
    */
   _snapLatLng(latlng, exclude = null) {
     const snap = this.options.snap;
     if (!snap || !snap.enabled) return latlng;
     const point = this.map.latLngToContainerPoint(latlng);
-    const excludeRoot = exclude ? this._resolveSelectionRoot(exclude) : null;
+    const excluded = new Set();
+    if (exclude) {
+      for (const item of Array.isArray(exclude) ? exclude : [exclude]) {
+        const root = item ? this._resolveSelectionRoot(item) : null;
+        if (root) excluded.add(root);
+      }
+    }
 
     if (snap.toVertices !== false) {
       let best = null;
       let bestDistance = Number(snap.tolerance) || 10;
       for (const layer of this.map.getLayers()) {
         if (this._isInternal(layer) || !getLayerKind(layer)) continue;
-        if (excludeRoot && this._resolveSelectionRoot(layer) === excludeRoot) continue;
+        if (excluded.size && excluded.has(this._resolveSelectionRoot(layer))) continue;
         for (const vertex of getLayerVertices(layer)) {
           const candidate = this.map.latLngToContainerPoint(vertex);
           const distance = candidate.distanceTo(point);

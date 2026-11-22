@@ -25,7 +25,7 @@ export class HandleLayer extends Layer {
     this._onPointerDown = (event) => this._handlePointerDown(event);
     this._onContextMenu = (event) => this._handleContextMenu(event);
     this._onClick = (event) => this._handleClick(event);
-    this._onDblClick = (event) => event.stopPropagation();
+    this._onDblClick = (event) => this._handleDblClick(event);
   }
 
   /** @param {any} map */
@@ -191,6 +191,19 @@ export class HandleLayer extends Layer {
     if (event.ctrlKey || event.metaKey) {
       event.preventDefault();
       this.plugin._onHandleCtrlClick(handle, event);
+      return;
     }
+    this.plugin._onHandleClick(handle, event);
+  }
+
+  /** @private */
+  _handleDblClick(event) {
+    const handle = this._findHandle(event);
+    if (!handle) {
+      event.stopPropagation();
+      return;
+    }
+    event.stopPropagation();
+    this.plugin._onHandleDblClick(handle, event);
   }
 }

@@ -160,12 +160,12 @@ describe('EditPlugin: выбор и вершины', () => {
     const vertex = session
       .getHandles()
       .find((handle) => handle.kind === 'vertex' && handle.index === inserted.index);
-    expect(session.deleteVertex(vertex)).toBe(true);
+    expect(session.deleteVertex(vertex)).toBe('vertex');
     expect(polygon.getLatLngs()[0]).toHaveLength(4);
   });
 
-  it('не удаляет вершины ниже минимума', () => {
-    const { plugin, map } = createHarness();
+  it('не удаляет вершины ниже минимума, если это запрещено опцией', () => {
+    const { plugin, map } = createHarness({ removeLayerBelowMinVertexCount: false });
     const polygon = new Polygon([
       [
         [-20, -20],

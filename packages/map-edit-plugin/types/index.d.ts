@@ -134,6 +134,12 @@ export interface EditPluginOptions {
   warnSelfIntersection?: boolean;
   maxHandles?: number;
   midpoints?: boolean;
+  /** Синоним midpoints: false. */
+  hideMiddleMarkers?: boolean;
+  /** Чем удалять вершину: правым кликом (по умолчанию), кликом, двойным кликом. */
+  removeVertexOn?: 'contextmenu' | 'click' | 'dblclick' | 'none';
+  /** Убирать кольцо или объект, когда вершин становится меньше минимума. */
+  removeLayerBelowMinVertexCount?: boolean;
   edgePan?: EdgePanOptions;
   style?: EditStyleOptions;
   handles?: HandleStyleOptions;
@@ -279,7 +285,7 @@ export declare class EditSession {
   getHandles(): EditHandle[];
   setVertex(handle: EditHandle, latlng: LatLngLike): void;
   insertVertex(handle: EditHandle): { part: number; index: number; handleId: string } | null;
-  deleteVertex(handle: EditHandle): boolean;
+  deleteVertex(handle: EditHandle): 'vertex' | 'ring' | 'layer' | false;
   getSnapshot(): object | null;
   restore(snapshot: object | null): void;
   translateFrom(snapshot: object, delta: PointLike): object;
@@ -302,7 +308,7 @@ export declare class GroupEditSession {
   getHandles(): EditHandle[];
   setVertex(handle: EditHandle, latlng: LatLngLike): void;
   insertVertex(handle: EditHandle): { part: number; index: number; handleId: string } | null;
-  deleteVertex(handle: EditHandle): boolean;
+  deleteVertex(handle: EditHandle): 'vertex' | 'ring' | 'layer' | false;
   getSnapshot(): Array<{ layer: any; snapshot: object }>;
   restore(snapshot: Array<{ layer: any; snapshot: object }>): void;
   translateFrom(
@@ -412,6 +418,7 @@ export declare class EditPlugin {
   isSelected(layer: any): boolean;
   clearSelection(): this;
   enableEdit(layer: any): EditSession | GroupEditSession | null;
+  toggleEdit(layer: any): boolean;
   disableEdit(layer: any): boolean;
   isEditable(layer: any): boolean;
   getSession(layer: any): EditSession | GroupEditSession | null;
@@ -547,7 +554,7 @@ export declare namespace Operations {
   function splitPolygonByLine(rings: XYRing[], cutter: XYRing): [XYRing[], XYRing[]] | null;
   function splitPolylineByLine(parts: XYRing[], cutter: XYRing): XYRing[] | null;
   function dissolveRings(
-    rings: XYRing[],
+    polygons: XYRing[] | XYRing[][],
     options?: { tolerance?: number },
   ): { rings: XYRing[]; error?: undefined } | { error: 'overlap' | 'open-boundary' | 'empty' };
 }

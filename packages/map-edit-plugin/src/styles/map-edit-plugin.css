@@ -22,6 +22,9 @@
   --map-edit-handle-color: #ffffff;
   --map-edit-handle-stroke: #1f2937;
   --map-edit-midpoint-color: #93c5fd;
+  --map-edit-toast-bg: rgba(15, 23, 42, 0.92);
+  --map-edit-toast-color: #f8fafc;
+  --map-edit-toast-border: rgba(15, 23, 42, 0.2);
 }
 
 /* Панель инструментов */
@@ -148,6 +151,36 @@
 .map-edit-draw-toolbar .map-edit-button-primary:hover:not(:disabled) {
   background: var(--map-edit-control-active);
   color: var(--map-edit-control-active-color);
+}
+
+/* Сообщение об отказе операции */
+
+.map-edit-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 700;
+  max-width: min(420px, calc(100vw - 40px));
+  padding: 8px 12px;
+  border: 1px solid var(--map-edit-toast-border);
+  border-radius: var(--map-edit-control-radius);
+  background: var(--map-edit-toast-bg);
+  color: var(--map-edit-toast-color);
+  box-shadow: var(--map-edit-control-shadow);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.map-edit-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 /* Вершины и середины сегментов */
@@ -287,6 +320,9 @@
   --map-edit-selected-glow: rgba(251, 191, 36, 0.5);
   --map-edit-stroke: #38bdf8;
   --map-edit-fill: rgba(56, 189, 248, 0.16);
+  --map-edit-toast-bg: rgba(248, 250, 252, 0.95);
+  --map-edit-toast-color: #0f172a;
+  --map-edit-toast-border: rgba(148, 163, 184, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -329,7 +365,8 @@
 @media (prefers-reduced-motion: reduce) {
   .map-edit-control .map-edit-button,
   .map-edit-draw-toolbar .map-edit-button,
-  .map-edit-handle {
+  .map-edit-handle,
+  .map-edit-toast {
     transition: none;
   }
 }
