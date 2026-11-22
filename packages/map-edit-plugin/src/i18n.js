@@ -8,6 +8,7 @@ export const DEFAULT_I18N = {
   toolbar: 'Edit map',
   select: 'Select',
   edit: 'Edit vertices',
+  dragMode: 'Drag objects',
   delete: 'Delete',
   undo: 'Undo',
   redo: 'Redo',

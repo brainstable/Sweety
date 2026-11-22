@@ -24,6 +24,11 @@
 - Новые кнопки панели редактора (мультиобъект, объединение по границам,
   разъединение, отверстие, разрез) с включением по текущему выбору, иконками и
   строками i18n.
+- Плагин редактирования: режим перетаскивания — `enableDrag`/`disableDrag`/
+  `toggleDrag`/`canDrag`, настройка по слою (`enableLayerDrag`,
+  `disableLayerDrag`, `layer.options.draggable`), опция `drag` и события
+  `drag:start`, `drag`, `drag:end`, `drag:enabled`, `drag:layer`.
+  Тело объекта двигается без выделения одной командой отмены.
 - Плагин редактирования: опции `removeVertexOn` (правый клик, клик, двойной клик
   или ничего), `removeLayerBelowMinVertexCount`, `hideMiddleMarkers` и метод
   `toggleEdit`. Отверстие удаляется по вершинам целиком, не трогая полигон.

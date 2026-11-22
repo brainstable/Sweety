@@ -25,6 +25,7 @@ const ICONS = {
   cut: '<circle cx="6" cy="6.5" r="2.4"/><circle cx="6" cy="17.5" r="2.4"/><path d="M8.2 7.9L20 16M8.2 16.1L20 8"/>',
   explode:
     '<path d="M3 10h6v6H3z"/><path d="M15 8h6v6h-6z"/><path d="M9 12h3"/><path d="M12 9.5L14.5 12 12 14.5"/>',
+  drag: '<path d="M12 3v18M3 12h18"/><path d="M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/>',
   vertices:
     '<circle cx="6" cy="18" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="16" r="2"/><path d="M6 18l6-13 7 11"/>',
 };

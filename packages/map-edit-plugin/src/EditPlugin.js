@@ -51,6 +51,7 @@ export const DEFAULT_OPTIONS = {
   modes: [
     'select',
     'edit',
+    'drag',
     'delete',
     'draw:marker',
     'draw:polyline',
@@ -67,6 +68,8 @@ export const DEFAULT_OPTIONS = {
   ],
   control: true,
   toolbar: true,
+  /** Включать режим перетаскивания сразу при создании. */
+  drag: false,
   keyboard: true,
   undoRedo: true,
   maxHistory: 100,
@@ -237,6 +240,10 @@ export class EditPlugin extends Evented {
     this._cssVars = [];
     this._intersectionState = new WeakMap();
     this._selectionDuringDraw = null;
+    /** Режим перетаскивания: тела объектов двигаются без выделения. */
+    this._dragEnabled = false;
+    /** @type {Map<any, boolean>} явные настройки перетаскивания по слою */
+    this._dragOverrides = new Map();
     /** @type {HTMLElement|null} */
     this._toast = null;
     /** @type {number|ReturnType<typeof setTimeout>|null} */
@@ -244,6 +251,7 @@ export class EditPlugin extends Evented {
 
     this._onMapClick = (event) => this._handleMapClick(event);
     this._onLayerRemove = (event) => this._handleLayerRemove(event);
+    this._onLayerAdd = () => this._refreshControl();
     this._onKeyDown = (event) => this._handleKeyDown(event);
     this._onDocPointerMove = (event) => this._queuePointer(event);
     this._onDocPointerUp = (event) => this._handlePointerUp(event);
@@ -267,6 +275,7 @@ export class EditPlugin extends Evented {
 
     this.map.on('click', this._onMapClick, this);
     this.map.on('layerremove', this._onLayerRemove, this);
+    this.map.on('layeradd', this._onLayerAdd, this);
     if (this.options.keyboard) document.addEventListener('keydown', this._onKeyDown);
 
     this.map.editPlugin = this;
@@ -274,6 +283,7 @@ export class EditPlugin extends Evented {
       this.map.edit = (opts) => EditPlugin.install(this.map, opts);
     }
 
+    if (this.options.drag) this.enableDrag();
     this.fire('ready', { plugin: this });
   }
 
@@ -304,6 +314,101 @@ export class EditPlugin extends Evented {
       this._refreshAll();
     }
     return this;
+  }
+
+  /* ----------------------------------------------------------------------- *
+   * Перетаскивание объектов
+   * ----------------------------------------------------------------------- */
+
+  /**
+   * Включает режим перетаскивания: тело любого редактируемого объекта можно
+   * двигать без выделения и без перехода в режим правки вершин.
+   * @returns {this}
+   */
+  enableDrag() {
+    if (this._dragEnabled) return this;
+    this._dragEnabled = true;
+    for (const root of this._candidateRoots()) this.enableEdit(root);
+    this.fire('drag:enabled', { enabled: true, map: this.map });
+    this._refreshAll();
+    return this;
+  }
+
+  /** @returns {this} */
+  disableDrag() {
+    if (!this._dragEnabled) return this;
+    this._dragEnabled = false;
+    this._cancelActiveDrag(true);
+    this.fire('drag:enabled', { enabled: false, map: this.map });
+    this._refreshAll();
+    return this;
+  }
+
+  /** @returns {boolean} новое состояние */
+  toggleDrag() {
+    const next = !this._dragEnabled;
+    if (next) this.enableDrag();
+    else this.disableDrag();
+    return next;
+  }
+
+  /** @returns {boolean} */
+  isDragEnabled() {
+    return this._dragEnabled;
+  }
+
+  /** Есть ли на карте объекты, которые можно перетаскивать. @returns {boolean} */
+  canDrag() {
+    return this._candidateRoots().length > 0;
+  }
+
+  /**
+   * Разрешает перетаскивание конкретного слоя, даже если общий режим выключен.
+   * @param {any} layer
+   * @returns {this}
+   */
+  enableLayerDrag(layer) {
+    if (!layer) return this;
+    this._dragOverrides.set(layer, true);
+    this.enableEdit(layer);
+    this.fire('drag:layer', { layer, enabled: true });
+    this._refreshAll();
+    return this;
+  }
+
+  /**
+   * Запрещает перетаскивание слоя. Приоритет выше общего режима и опции
+   * `layer.options.draggable`.
+   * @param {any} layer
+   * @returns {this}
+   */
+  disableLayerDrag(layer) {
+    if (!layer) return this;
+    this._dragOverrides.set(layer, false);
+    this.fire('drag:layer', { layer, enabled: false });
+    this._refreshAll();
+    return this;
+  }
+
+  /**
+   * @param {any} layer
+   * @returns {boolean}
+   */
+  isLayerDragEnabled(layer) {
+    return Boolean(layer) && this._isDraggable(layer);
+  }
+
+  /** @private */
+  _isDraggable(layer) {
+    if (!layer) return false;
+    const root = this._resolveSelectionRoot(layer);
+    for (const candidate of [layer, root]) {
+      if (!candidate) continue;
+      if (this._dragOverrides.has(candidate)) return this._dragOverrides.get(candidate);
+      if (candidate.options?.draggable === false) return false;
+      if (candidate.options?.draggable === true) return true;
+    }
+    return this._dragEnabled;
   }
 
   /* ----------------------------------------------------------------------- *
@@ -1434,7 +1539,10 @@ export class EditPlugin extends Evented {
 
   /** @private */
   _onBodyPointerDown(session, event) {
-    if (this._destroyed || this._mode.mode !== 'edit' || !session) return;
+    if (this._destroyed || !session) return;
+    // В режиме правки тело двигается у выбранных объектов, в режиме
+    // перетаскивания — у любого объекта, которому это разрешено.
+    if (this._mode.mode !== 'edit' && !this._isDraggable(session.layer)) return;
     this._activeHandler = new BodyDragHandler(this);
     this._activeHandler.start(session, event);
   }
@@ -1446,7 +1554,8 @@ export class EditPlugin extends Evented {
       return;
     }
     const root = this._rootSessionForLayer(session.layer) || session;
-    if (!this._selected.has(root.layer) && !this._selected.has(session.layer)) {
+    const draggable = this._isDraggable(session.layer);
+    if (!draggable && !this._selected.has(root.layer) && !this._selected.has(session.layer)) {
       this._activeHandler = null;
       return;
     }
@@ -1454,13 +1563,17 @@ export class EditPlugin extends Evented {
     event.preventDefault?.();
     event.stopPropagation?.();
     const startPoint = new Point(DomUtil.getMousePosition(event, this.map.getContainer()));
+    const layers = root.isGroup() ? root.children.map((child) => child.layer) : [root.layer];
     this._bodyDrag = {
       root,
       snapshot: root.getSnapshot(),
       startPoint,
       startLatLng: this.map.containerPointToLatLng(startPoint),
       moved: false,
+      layers,
     };
+    this.map.getContainer().classList.add('map-edit-dragging');
+    this.fire('drag:start', { layer: layers[0] || null, layers, map: this.map });
     document.addEventListener('pointermove', this._onDocPointerMove);
     document.addEventListener('pointerup', this._onDocPointerUp);
     document.addEventListener('pointercancel', this._onDocPointerCancel);
@@ -1515,6 +1628,15 @@ export class EditPlugin extends Evented {
     const delta = this.map.project(current).subtract(this.map.project(drag.startLatLng));
     drag.after = drag.root.translateFrom(drag.snapshot, delta);
     this.handleLayer?.scheduleRender();
+    if (drag.moved) {
+      this.fire('drag', {
+        layer: drag.layers[0] || null,
+        layers: drag.layers,
+        latlng: current,
+        containerPoint: point,
+        map: this.map,
+      });
+    }
   }
 
   /** @private */
@@ -1584,6 +1706,7 @@ export class EditPlugin extends Evented {
     if (!drag) return;
     this._cleanupPointer();
     this._bodyDrag = null;
+    this.map.getContainer().classList.remove('map-edit-dragging');
     if (!drag.moved) {
       this._refreshAll();
       return;
@@ -1607,6 +1730,7 @@ export class EditPlugin extends Evented {
     );
     if (this.options.undoRedo) this._stack.push(command, { apply: false });
     this._emitUpdate(layers, 'move-layer', { command });
+    this.fire('drag:end', { layer: layers[0] || null, layers, command });
     this._suppressNextClick();
     this._refreshAll();
   }
@@ -1639,6 +1763,7 @@ export class EditPlugin extends Evented {
       const drag = this._bodyDrag;
       this._bodyDrag = null;
       if (restore) drag.root.restore(drag.snapshot);
+      this.map.getContainer().classList.remove('map-edit-dragging');
     }
     this._cleanupPointer();
     this.handleLayer?.scheduleRender();
@@ -2260,6 +2385,7 @@ export class EditPlugin extends Evented {
 
     this.map.off('click', this._onMapClick, this);
     this.map.off('layerremove', this._onLayerRemove, this);
+    this.map.off('layeradd', this._onLayerAdd, this);
     document.removeEventListener('keydown', this._onKeyDown);
     if (this._dragFrame) {
       cancelAnimFrame(this._dragFrame);

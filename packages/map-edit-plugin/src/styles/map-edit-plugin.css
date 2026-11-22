@@ -251,6 +251,14 @@
   cursor: move;
 }
 
+/* Режим перетаскивания: тела всех объектов показывают курсор перемещения. */
+
+.map-edit-plugin.map-edit-dragging,
+.map-edit-plugin.map-edit-dragging .sweety-path,
+.map-edit-plugin.map-edit-dragging .map-edit-body-target {
+  cursor: move;
+}
+
 /* Ghost-слой */
 
 .map-edit-ghost-path {

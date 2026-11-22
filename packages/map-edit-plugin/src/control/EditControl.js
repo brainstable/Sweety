@@ -7,6 +7,7 @@ const { requestAnimFrame, cancelAnimFrame } = Util;
 const ACTION_ICONS = {
   select: 'select',
   edit: 'edit',
+  drag: 'drag',
   delete: 'trash',
   undo: 'undo',
   redo: 'redo',
@@ -25,6 +26,7 @@ const ACTION_ICONS = {
 const ACTION_LABELS = {
   select: 'select',
   edit: 'edit',
+  drag: 'dragMode',
   delete: 'delete',
   undo: 'undo',
   redo: 'redo',
@@ -224,6 +226,7 @@ export class EditControl extends Control {
     if (action === 'undo') this.plugin.undo();
     else if (action === 'redo') this.plugin.redo();
     else if (action === 'merge') this.plugin.mergeSelected();
+    else if (action === 'drag') this.plugin.toggleDrag();
     else if (action === 'union') this.plugin.unionSelected();
     else if (action === 'explode') this.plugin.explodeSelected();
     else if (action === 'hole') this.plugin.startHole();
@@ -242,11 +245,14 @@ export class EditControl extends Control {
       const action = button.dataset.action;
       const active = action.startsWith('draw:')
         ? mode === 'create' && drawType === action.slice(5)
-        : mode === action;
+        : action === 'drag'
+          ? this.plugin.isDragEnabled()
+          : mode === action;
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-pressed', active ? 'true' : 'false');
       if (action === 'undo') button.disabled = !this.plugin.canUndo();
       else if (action === 'redo') button.disabled = !this.plugin.canRedo();
+      else if (action === 'drag') button.disabled = !this.plugin.canDrag();
       else if (action === 'merge') button.disabled = !this.plugin.canMerge();
       else if (action === 'union') button.disabled = !this.plugin.canUnion();
       else if (action === 'explode') button.disabled = !this.plugin.canExplode();

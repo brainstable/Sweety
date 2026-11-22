@@ -121,6 +121,7 @@ export interface EditPluginOptions {
   modes?: string[];
   control?: boolean;
   toolbar?: boolean;
+  drag?: boolean;
   keyboard?: boolean;
   undoRedo?: boolean;
   maxHistory?: number;
@@ -430,6 +431,14 @@ export declare class EditPlugin {
   cancelDrawing(): boolean;
   getDrawType(): string | null;
   isDrawing(): boolean;
+  enableDrag(): this;
+  disableDrag(): this;
+  toggleDrag(): boolean;
+  isDragEnabled(): boolean;
+  canDrag(): boolean;
+  enableLayerDrag(layer: any): this;
+  disableLayerDrag(layer: any): this;
+  isLayerDragEnabled(layer: any): boolean;
   canMerge(layers?: any[] | any): boolean;
   mergeSelected(layers?: any[] | any): any | null;
   mergeLayers(layers?: any[] | any): any | null;

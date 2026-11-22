@@ -160,34 +160,38 @@ editor.clearSelection();
 
 ## API
 
-| Метод                                           | Назначение                                             |
-| ----------------------------------------------- | ------------------------------------------------------ |
-| `new EditPlugin(map, options)`                  | создать редактор и панель                              |
-| `EditPlugin.install(map, options)`              | установить/получить экземпляр                          |
-| `enableEdit(layer) → session`                   | включить редактирование слоя или группы                |
-| `disableEdit(layer)`                            | выключить и убрать handles                             |
-| `toggleEdit(layer)`                             | переключить редактирование, вернуть новое состояние    |
-| `isEditable(layer)`                             | включено ли редактирование                             |
-| `getSession(layer)`                             | сессия слоя                                            |
-| `setMode(mode)` / `getMode()`                   | режим                                                  |
-| `selectLayer(layer, additive?)`                 | выбрать слой                                           |
-| `unselectLayer` / `toggleSelection`             | снять/переключить выбор                                |
-| `getSelected()` / `clearSelection()`            | выбор                                                  |
-| `startDrawing(type, options?)`                  | `marker`, `polyline`, `polygon`, `circle`, `rectangle` |
-| `finishDrawing()` / `cancelDrawing()`           | завершить/отменить черновик                            |
-| `isDrawing()` / `getDrawType()`                 | состояние рисования                                    |
-| `canMerge()` / `mergeSelected()`                | мультиобъект из выбранных полигонов или линий          |
-| `canExplode()` / `explodeSelected()`            | разъединить мультиобъект на отдельные объекты          |
-| `canAddHole()` / `startHole(layer?)`            | нарисовать отверстие в полигоне                        |
-| `addHole(layer, ring)` / `removeHole(layer, i)` | добавить/убрать отверстие программно                   |
-| `canCut()` / `startCut()`                       | разрезание секущей линией                              |
-| `cutLayers(layers, cutter)`                     | разрезать объекты готовой линией                       |
-| `canUnion()` / `unionSelected()`                | объединить полигоны по общим границам                  |
-| `deleteLayer(layer)`                            | удалить слой (с учётом `confirmDelete`)                |
-| `deleteSelected()`                              | удалить выбранные                                      |
-| `undo()` / `redo()` / `canUndo()` / `canRedo()` | история                                                |
-| `destroy()`                                     | снять все обработчики, DOM и подписки                  |
-| `t(key, vars?)`                                 | строка i18n                                            |
+| Метод                                             | Назначение                                             |
+| ------------------------------------------------- | ------------------------------------------------------ |
+| `new EditPlugin(map, options)`                    | создать редактор и панель                              |
+| `EditPlugin.install(map, options)`                | установить/получить экземпляр                          |
+| `enableEdit(layer) → session`                     | включить редактирование слоя или группы                |
+| `disableEdit(layer)`                              | выключить и убрать handles                             |
+| `toggleEdit(layer)`                               | переключить редактирование, вернуть новое состояние    |
+| `isEditable(layer)`                               | включено ли редактирование                             |
+| `getSession(layer)`                               | сессия слоя                                            |
+| `setMode(mode)` / `getMode()`                     | режим                                                  |
+| `selectLayer(layer, additive?)`                   | выбрать слой                                           |
+| `unselectLayer` / `toggleSelection`               | снять/переключить выбор                                |
+| `getSelected()` / `clearSelection()`              | выбор                                                  |
+| `startDrawing(type, options?)`                    | `marker`, `polyline`, `polygon`, `circle`, `rectangle` |
+| `finishDrawing()` / `cancelDrawing()`             | завершить/отменить черновик                            |
+| `isDrawing()` / `getDrawType()`                   | состояние рисования                                    |
+| `enableDrag()` / `disableDrag()` / `toggleDrag()` | режим перетаскивания тел объектов                      |
+| `isDragEnabled()` / `canDrag()`                   | состояние и доступность режима                         |
+| `enableLayerDrag(layer)` / `disableLayerDrag`     | разрешить/запретить перетаскивание одного слоя         |
+| `isLayerDragEnabled(layer)`                       | можно ли перетаскивать слой                            |
+| `canMerge()` / `mergeSelected()`                  | мультиобъект из выбранных полигонов или линий          |
+| `canExplode()` / `explodeSelected()`              | разъединить мультиобъект на отдельные объекты          |
+| `canAddHole()` / `startHole(layer?)`              | нарисовать отверстие в полигоне                        |
+| `addHole(layer, ring)` / `removeHole(layer, i)`   | добавить/убрать отверстие программно                   |
+| `canCut()` / `startCut()`                         | разрезание секущей линией                              |
+| `cutLayers(layers, cutter)`                       | разрезать объекты готовой линией                       |
+| `canUnion()` / `unionSelected()`                  | объединить полигоны по общим границам                  |
+| `deleteLayer(layer)`                              | удалить слой (с учётом `confirmDelete`)                |
+| `deleteSelected()`                                | удалить выбранные                                      |
+| `undo()` / `redo()` / `canUndo()` / `canRedo()`   | история                                                |
+| `destroy()`                                       | снять все обработчики, DOM и подписки                  |
+| `t(key, vars?)`                                   | строка i18n                                            |
 
 ## События
 
@@ -199,6 +203,11 @@ editor.clearSelection();
 | `edit:enabled`     | `{ layer }`                                   |
 | `edit:disabled`    | `{ layer }`                                   |
 | `update`           | `{ layer, layers, action, command? }`         |
+| `drag:start`       | `{ layer, layers }`                           |
+| `drag`             | `{ layer, layers, latlng, containerPoint }`   |
+| `drag:end`         | `{ layer, layers, command }`                  |
+| `drag:enabled`     | `{ enabled, map }`                            |
+| `drag:layer`       | `{ layer, enabled }`                          |
 | `create`           | `{ layer, type, parent? }`                    |
 | `delete`           | `{ layer, layers, command }`                  |
 | `draw:started`     | `{ type, target? }`                           |
@@ -238,6 +247,7 @@ const editor = new EditPlugin(map, {
   modes: ['select', 'edit', 'draw:polygon', 'draw:polyline', 'delete', 'undo', 'redo'],
   control: true,
   toolbar: true,
+  drag: false, // включить режим перетаскивания при создании
   keyboard: true,
   undoRedo: true,
   maxHistory: 100,
@@ -310,6 +320,37 @@ limits: {
 
 `maxHandles` ограничивает число одновременно отрисованных вершин; для полигонов
 длиннее 200 вершин середины сегментов не создаются.
+
+## Перетаскивание объектов
+
+Режим перетаскивания двигает тела объектов без выделения и без показа вершин:
+удобно, когда нужно быстро расставить объекты, а не править их форму.
+
+```js
+editor.enableDrag();
+editor.toggleDrag(); // true — включён, false — выключен
+editor.isDragEnabled();
+editor.canDrag(); // есть ли на карте что перетаскивать
+
+editor.enableLayerDrag(polygon); // разрешить только один слой
+editor.disableLayerDrag(polygon); // запретить, даже если режим включён
+editor.isLayerDragEnabled(polygon);
+```
+
+Слой можно заблокировать и через его собственные опции:
+
+```js
+const locked = new Polygon(latlngs, { draggable: false }).addTo(map);
+```
+
+Порядок приоритетов: явные `enableLayerDrag`/`disableLayerDrag`, затем
+`layer.options.draggable`, затем общий режим. Один жест — одна команда отмены:
+`MoveLayerCommand` двигает группу целиком.
+
+Во время жеста приходят `drag:start`, `drag` (на каждый кадр, с `latlng` и
+`containerPoint`) и `drag:end` с готовой командой; включение режима —
+`drag:enabled`, настройка слоя — `drag:layer`. Класс `map-edit-dragging` на
+контейнере карты переключает курсор.
 
 ## Рисование
 
